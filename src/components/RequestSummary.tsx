@@ -1,21 +1,14 @@
 import type { Submission } from '../planning/state';
+import { displayTime } from '../planning/displayTime';
 import { STARTING_STATES } from '../planning/types';
-const time = (value: string) => { const [hours, minutes] = value.split(':').map(Number); return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`; };
-const date = (value: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date(`${value}T12:00:00`));
 export function RequestSummary({ submission, onEdit }: { submission: Submission; onEdit: () => void }) {
-  const { request, metadata, result } = submission;
-  return <><div className="page-heading"><p className="eyebrow">REQUEST RECEIVED</p><h1>Here’s what you’ve given us.</h1><p>Your details and decided stops are intact. This is a request summary, not an itinerary.</p></div>
-    <div className="result-status"><span className="check-icon" aria-hidden="true">✓</span><div><strong>Ready for the next planning step</strong><p>Itinerary generation hasn’t been built yet. No places have been added or changed.</p></div></div>
-    <section className="panel" aria-labelledby="summary-title"><div className="section-heading"><h2 id="summary-title">Your outing details</h2><button type="button" className="text-button" onClick={onEdit}>Edit request</button></div><dl className="summary-grid">
-    <div><dt>Starting location</dt><dd>{request.startingLocation}</dd></div><div><dt>Date</dt><dd>{date(request.date)}</dd></div>
-    <div><dt>Available start time</dt><dd>{time(request.availableStartTime)}</dd></div><div><dt>Required end time</dt><dd>{time(request.requiredEndTime)}</dd></div>
-    <div><dt>Budget per person</dt><dd>{new Intl.NumberFormat('en-US', { style: 'currency', currency: request.budgetPerPerson.currency }).format(request.budgetPerPerson.amountCents / 100)} USD</dd></div><div><dt>Group size</dt><dd>{request.groupSize} {request.groupSize === 1 ? 'person' : 'people'}</dd></div>
-    <div><dt>Transportation</dt><dd className="capitalize">{request.transportation}</dd></div><div><dt>Vibe / interests</dt><dd>{request.vibeInterests}</dd></div>
-    <div className="full-width"><dt>Starting state</dt><dd>{STARTING_STATES.find(s => s.value === request.startingState)?.label}</dd></div></dl></section>
-    <section className="panel" aria-labelledby="stops-title"><div className="section-heading"><h2 id="stops-title">Your existing pieces</h2><span className="count">{request.existingStops.length} {request.existingStops.length === 1 ? 'stop' : 'stops'}</span></div>
-      {!request.existingStops.length ? <p className="section-note">Nothing planned yet. No existing stops were submitted.</p> : <ol className="received-stops">{request.existingStops.map((stop, index) => <li key={stop.id}><div className="received-stop-heading"><h3>{index + 1}. {stop.name}</h3><span className={`status-badge ${stop.fixed ? 'fixed' : ''}`}>{stop.fixed ? 'Fixed' : 'Flexible'}</span></div><dl className="stop-facts"><div><dt>Start</dt><dd>{stop.startTime ? time(stop.startTime) : 'Not specified'}</dd></div><div><dt>End</dt><dd>{stop.endTime ? time(stop.endTime) : 'Not specified'}</dd></div><div><dt>Duration</dt><dd>{stop.durationMinutes === null ? 'Not specified' : `${stop.durationMinutes} min`}</dd></div></dl>{stop.note && <p className="stop-note">{stop.note}</p>}<p className="preservation-note">{stop.fixed ? `Keep this place${stop.constraints.preserveStartTime ? ` and its ${time(stop.startTime!)} start` : ''}${stop.constraints.preserveEndTime ? ` and ${time(stop.endTime!)} end` : ''}${stop.constraints.preserveDuration ? ` and ${stop.durationMinutes}-minute duration` : ''} fixed.` : 'This stop is flexible. Its details are saved for future planning.'}</p></li>)}</ol>}
-    </section>
-    <details className="debug-panel"><summary>Founder / debug: structured request</summary><p>This is the submitted snapshot. Unknown timing stays null; fixed constraints are explicit.</p><pre data-testid="structured-request">{JSON.stringify({ request, result, metadata }, null, 2)}</pre></details>
-    <div className="results-actions"><button type="button" className="secondary" onClick={onEdit}>← Back to edit request</button><span className="hint">Batch 1 · No itinerary generated</span></div>
-  </>;
+  const { request } = submission;
+  const budget = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: request.budgetPerPerson.amountCents % 100 ? 2 : 0 }).format(request.budgetPerPerson.amountCents / 100);
+  return <><div className="page-heading"><p className="eyebrow">YOUR OUTING</p><h1>Your outing details are saved.</h1><p>Your choices are ready. A complete itinerary isn’t available yet.</p></div>
+  <section className="panel"><div className="section-heading"><h2>Your outing</h2><button className="text-button" onClick={onEdit}>Edit details</button></div><p className="budget-summary">About {budget} per person</p><dl className="summary-grid">
+  <div><dt>Where you are</dt><dd>{request.startingLocation}</dd></div><div><dt>Date</dt><dd>{new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date(request.date + 'T12:00:00'))}</dd></div>
+  <div><dt>Start</dt><dd>{displayTime(request.availableStartTime)}</dd></div><div><dt>Finish by</dt><dd>{displayTime(request.requiredEndTime)}</dd></div>
+  <div><dt>Group</dt><dd>{request.groupSize} people</dd></div><div><dt>Getting around</dt><dd className="capitalize">{request.transportation}</dd></div><div><dt>Interests</dt><dd>{request.vibeInterests}</dd></div><div><dt>Already planned</dt><dd>{STARTING_STATES.find(s => s.value === request.startingState)?.label}</dd></div></dl></section>
+  {!!request.existingStops.length && <section className="panel"><h2>Your decided pieces</h2><ol className="received-stops">{request.existingStops.map(s => <li key={s.id}><div className="received-stop-heading"><h3>{s.name}</h3><span className="status-badge">{s.fixed ? 'Fixed' : 'Flexible'}</span></div><p>{s.startTime ? displayTime(s.startTime) : 'Start time open'}{s.endTime ? ` – ${displayTime(s.endTime)}` : ''}{s.durationMinutes ? ` · ${s.durationMinutes} minutes` : ''}</p>{s.note && <p>{s.note}</p>}</li>)}</ol></section>}
+  <button className="secondary" onClick={onEdit}>← Edit your outing</button></>;
 }

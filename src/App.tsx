@@ -42,7 +42,7 @@ export function App() {
             const response = await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ draft: state.draft, parentRunId: run?.runId }) });
             const result = await response.json();
             if (!response.ok)
-                throw new Error((result.error || 'Could not build the plan') + (result.runId ? ` · Stored failure Run ID: ${result.runId} (open /api/runs/${result.runId} for diagnostics)` : ''));
+                throw new Error((result.error || 'Could not save your outing'));
             setRun(result);
             try { sessionStorage.setItem('outing-last-run', result.runId); } catch { setStorageUnavailable(true); }
             setState(current => ({ ...current, screen: 'results', submission: { request, result: { status: 'not-generated', primaryItinerary: null }, metadata: createFounderMetadata() } }));
@@ -57,11 +57,11 @@ export function App() {
     useEffect(() => { let id: string | null = null; try { id = sessionStorage.getItem('outing-last-run'); } catch { setStorageUnavailable(true); } if (id)
         fetch('/api/runs/' + id).then(r => r.ok ? r.json() : null).then(r => { if (r)
             setRun(r); }).catch(() => { }); }, []);
-    return <div className="app"><header className="app-header"><strong>Outing planner</strong><span className="version">V0.1 · Guest prototype</span></header><main ref={headingRef} tabIndex={-1}>
+    return <div className="app"><header className="app-header"><strong>Outing planner</strong><span className="version">Plan your time together</span></header><main ref={headingRef} tabIndex={-1}>
     {storageUnavailable && <p className="storage-notice" role="status">This browser can’t save the current tab’s draft. You can still plan, but refreshing will clear your input.</p>}
     {error && <p role="alert" className="storage-notice">{error}</p>}
-    {busy && <p role="status">Building and saving your plan…</p>}
-    {state.screen === 'results' && run ? <PlanResults run={run} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : state.screen === 'results' && state.submission ? <RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : <PlanningForm draft={state.draft} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
+    {busy && <p role="status">Saving your outing…</p>}
+    {state.screen === 'results' && run && window.location.pathname === '/founder' ? <PlanResults run={run} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : state.screen === 'results' && state.submission ? <RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : <PlanningForm draft={state.draft} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
     <footer className="app-footer"><span>No account needed.</span><span>Draft kept in this browser tab only.</span></footer>
   </main></div>;
 }

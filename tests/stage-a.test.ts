@@ -1,0 +1,11 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { emptyDraft, localToday } from '../src/planning/draft.ts';
+import { validateRequest } from '../src/planning/validate.ts';
+import { displayTime, timeParts, toInternalTime } from '../src/planning/displayTime.ts';
+import { restoreState } from '../src/planning/state.ts';
+test('five people with $40 per person retains 4000 cents each',()=>{const draft={...emptyDraft(),startingLocation:'Los Angeles',availableStartTime:'16:00',requiredEndTime:'23:00',budgetPerPerson:'40',groupSize:'5',transportation:'driving' as const,vibeInterests:'food and active'};const r=validateRequest(draft);assert.ok(r.ok);assert.equal(r.request.budgetPerPerson.amountCents,4000);assert.equal(r.request.groupSize,5);});
+test('fresh date uses browser local calendar and saved date remains selected',()=>{const now=new Date();assert.equal(emptyDraft().date,localToday(now));assert.equal(localToday(new Date(2026,9,2,23,59)),'2026-10-02');const draft={...emptyDraft(),date:'2027-04-10'};assert.equal(restoreState(JSON.stringify({version:1,screen:'form',draft,submission:null})).draft.date,'2027-04-10');});
+test('12-hour display and selectors retain canonical times',()=>{assert.equal(displayTime('16:00'),'4:00 PM');assert.equal(displayTime('23:00'),'11:00 PM');assert.equal(displayTime('19:00'),'7:00 PM');assert.equal(toInternalTime('7','00','PM'),'19:00');assert.equal(toInternalTime('12','15','AM'),'00:15');assert.equal(timeParts('23:00').hour,'11');});
+test('consumer summary has budget context and no diagnostics or fictional recommendations',()=>{const source=readFileSync(new URL('../src/components/RequestSummary.tsx',import.meta.url),'utf8');assert.match(source,/About \{budget\} per person/);assert.doesNotMatch(source,/Founder|debug|TEST_|synthetic|assumptions|prototype|Batch/);assert.match(source,/complete itinerary isn’t available yet/);const form=readFileSync(new URL('../src/components/PlanningForm.tsx',import.meta.url),'utf8');assert.match(form,/Where are you\?/);assert.doesNotMatch(form,/type="time"/);});

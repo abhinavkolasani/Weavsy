@@ -1,6 +1,7 @@
 import type { ExistingStopDraft, PlanningDraft, StartingState } from './types.ts';
+export function localToday(now = new Date()): string { return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
 export function emptyDraft(): PlanningDraft {
-  return { startingLocation: '', date: '', availableStartTime: '', requiredEndTime: '', budgetPerPerson: '', groupSize: '1', transportation: '', vibeInterests: '', startingState: 'nothing-planned', existingStops: [] };
+  return { startingLocation: '', date: localToday(), availableStartTime: '', requiredEndTime: '', budgetPerPerson: '', groupSize: '1', transportation: '', vibeInterests: '', startingState: 'nothing-planned', existingStops: [] };
 }
 export function newStop(fixed = false): ExistingStopDraft {
   return { id: crypto.randomUUID(), name: '', fixed, startTime: '', timingDetail: 'unknown', endTime: '', durationMinutes: '', note: '' };
