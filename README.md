@@ -1,6 +1,6 @@
 # Outing planner V0.1
 
-A complete local founder prototype: guest context → one structured outing, preserving fixed decisions, with deterministic scheduling and a controlled synthetic TEST catalog.
+A local guest prototype: enter outing details and existing decisions, then receive a clear saved-request summary. Stage A is independently verified; live Google integration is stopped for the manual setup in [GOOGLE_SETUP.md](GOOGLE_SETUP.md).
 
 ## Run
 
@@ -15,11 +15,11 @@ Open http://127.0.0.1:5174. No account or API key is required. `pnpm test` runs 
 
 ## Current behavior
 
-All eight guest inputs and all five starting situations are supported. Fixed identity, times, end and duration are preserved; flexible pieces are scheduled around them. The planner records open windows, filters active catalog candidates by hours, capacity, budget and available time, reserves travel/buffers and produces one chronological itinerary or explicit conflicts. Untimed catalog pieces wait for opening intervals. Suitable flexible start preferences are retained.
+All eight guest inputs and all five starting situations are supported. New drafts default to the browser's local date and Nothing planned. Budget stays per person independently of group size. Explicit AM/PM controls retain normalized internal times; consumer summaries use 12-hour time. Fixed identity, known times and notes remain structured. The normal guest results summarize the received request and clearly say an itinerary is not available yet.
 
-The frontend sends the submitted draft to the local API. SQLite stores raw plan runs, errors and rebuild linkage in `.data/plan-runs.sqlite`, excluded from Git. Browser session storage preserves the guest draft and last Run ID; refreshing retrieves the saved itinerary. The founder disclosure shows structured constraints, assumptions, candidates, selected IDs, failures and itinerary. Product Intelligence remains a separate human-reviewed evidence layer.
+The frontend sends the submitted draft to the local API. SQLite stores internal raw runs and rebuild linkage in `.data/plan-runs.sqlite`, excluded from Git. Browser session storage preserves the guest draft and request summary across refresh. Existing deterministic engineering composition and raw run diagnostics remain at `/founder`, without a consumer-facing debug link. Product Intelligence remains a separate human-reviewed evidence layer.
 
-The catalog has 24 **fictional TEST places**, never real business claims. The separate TravelProvider uses a fictional zone matrix and conservative fallback for unknown locations such as Los Angeles. Costs/hours/geography for custom user stops are unknown; results explicitly mark the budget unconfirmed when those costs are missing. There is no live routing, geocoding or real-world coverage yet.
+The internal catalog has 24 **fictional TEST places**, never real business claims. These recommendations are not displayed in the normal guest experience. The separate engineering TravelProvider uses a fictional zone matrix; custom user costs/hours/geography are unknown. There is no live routing, geocoding or real-world coverage yet. See [BATCH_HANDOFF.md](BATCH_HANDOFF.md) for all requested report items and the pass/blocked test matrix.
 
 ## Verified catalog import
 
