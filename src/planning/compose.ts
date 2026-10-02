@@ -13,8 +13,10 @@ export async function compose(request:PlanningRequest, service:PlaceService=plac
  const allPlaces=await service.queryPlaces({include_inactive:true});
  const day=DAYS[(new Date(request.date+'T12:00:00').getDay()+6)%7];
  const travel=request.transportation==='walking'?25:request.transportation==='transit'?30:15, buffer=10;
- run.assumptions.push(routing.description);
+ run.assumptions.push(routing.description, 'Arrival buffer is 10 minutes; it is waived only for the first fixed stop when the exact starting place matches. Travel within a matched fictional zone is zero in the TEST matrix.');
  run.assumptions.push(`Travel uses a ${travel}-minute estimate per leg plus ${buffer} minutes of arrival buffer; geography, traffic, fares and parking are not verified. The finish is at the final stop, without a return journey.`, 'Catalog fixtures are synthetic TEST places, not executable real-world recommendations.');
+ const originPlace=allPlaces.find(p=>p.place_id===request.startingLocation||p.name.toLowerCase()===request.startingLocation.toLowerCase());
+ const originArea=originPlace?.area??places.find(p=>p.area===request.startingLocation)?.area??null;
  const fixed:PlanStop[]=[], flexible:PlanStop[]=[];
  for(const s of request.existingStops){
   const p=allPlaces.find(p=>p.place_id===s.name || p.name.toLowerCase()===s.name.toLowerCase());
@@ -30,21 +32,26 @@ export async function compose(request:PlanningRequest, service:PlaceService=plac
  fixed.sort((a,b)=>a.start-b.start);
  function hours(p:Place,at:number,duration:number){return p.opening_hours.weekly[day]?.some(h=>at>=minutes(h.opens)&&at+duration<=minutes(h.closes))??false;}
  function check(stop:PlanStop){const p=places.find(p=>p.place_id===stop.placeId); if(p&&!hours(p,stop.start,stop.duration))run.conflicts.push(`${stop.name} is closed or its hours are unknown during this stop.`);if(p&&((p.group_size?.min??1)>request.groupSize||(p.group_size?.max??Infinity)<request.groupSize))run.conflicts.push(`${stop.name} cannot accommodate this group.`);}
- if(request.startingLocation&&!request.startingLocation.startsWith('TEST_'))run.assumptions.push(`Starting location ${request.startingLocation} is saved but not geocoded; only fictional TEST-zone geography is available.`);
- let previous=start; let previousArea:string|null=null;
- for(const s of fixed){s.travelMinutes=routing.estimateMinutes(previousArea,s.area,request.transportation);if(s.start<previous+s.travelMinutes+buffer||s.start+s.duration>end)run.conflicts.push(`Fixed stop ${s.name} conflicts with the outing window, a prior fixed stop, or travel and arrival buffer.`); if(s.start>previous)run.openWindows.push({start:previous,end:s.start});previous=s.start+s.duration;previousArea=s.area;check(s);}
+ if(request.startingLocation&&!originArea)run.assumptions.push(`Starting location ${request.startingLocation} is saved but not geocoded; only fictional TEST-zone geography is available.`);
+ let previous=start; let previousArea:string|null=originArea;
+ for(const s of fixed){s.travelMinutes=routing.estimateMinutes(previousArea,s.area,request.transportation);s.bufferMinutes=previous===start&&originPlace?.place_id===s.placeId?0:buffer;if(s.start<previous+s.travelMinutes+s.bufferMinutes||s.start+s.duration>end)run.conflicts.push(`Fixed stop ${s.name} conflicts with the outing window, a prior fixed stop, or travel and arrival buffer.`); if(s.start>previous)run.openWindows.push({start:previous,end:s.start});previous=s.start+s.duration;previousArea=s.area;check(s);}
  if(previous<end)run.openWindows.push({start:previous,end});
+ const earliest=(p:Place|undefined,after:number,duration:number)=> {
+  if(!p)return after;
+  const intervals=p.opening_hours.weekly[day]??[];
+  return intervals.map(h=>Math.max(after,minutes(h.opens))).filter(at=>intervals.some(h=>at>=minutes(h.opens)&&at+duration<=minutes(h.closes))).sort((a,b)=>a-b)[0]??Infinity;
+ };
  const remaining=[...flexible]; let cursor=start, cost=[...fixed,...flexible].reduce((sum,s)=>sum+(s.costCents??0),0);
  const used=new Set(fixed.map(s=>s.placeId));
- let lastArea:string|null=null;
+ let lastArea:string|null=originArea;
  const desired=request.vibeInterests.toLowerCase();
  const rank=(p:Place)=> (desired.includes('food')&&p.category.includes('food')?30:0)+( /active|sport|adventure/.test(desired)&&p.category==='active_activity'?30:0)+p.vibe_tags.filter(t=>desired.includes(t)).length*10-(p.estimated_cost_per_person.amount_cents/1000);
  const candidates=[...places].sort((a,b)=>rank(b)-rank(a)||a.place_id.localeCompare(b.place_id));
  function scheduleWindow(boundary:number,nextFixed:PlanStop|undefined){
-  while(remaining.length){const s=remaining[0];s.travelMinutes=routing.estimateMinutes(lastArea,s.area,request.transportation);const at=cursor+s.travelMinutes+buffer;if(at+s.duration+(nextFixed?routing.estimateMinutes(s.area,nextFixed.area,request.transportation)+buffer:0)>boundary)break;s.start=at;check(s);run.stops.push(s);cursor=at+s.duration;lastArea=s.area;used.add(s.placeId);remaining.shift();}
+  while(remaining.length){const s=remaining[0];s.travelMinutes=routing.estimateMinutes(lastArea,s.area,request.transportation);const p=places.find(p=>p.place_id===s.placeId);const pref=request.existingStops.find(x=>x.id===s.stopId)?.startTime;const after=cursor+s.travelMinutes+buffer;const preferred=pref?minutes(pref):null;const at=preferred!==null&&preferred>=after&&(!p||hours(p,preferred,s.duration))&&preferred+s.duration+(nextFixed?travel+buffer:0)<=boundary?preferred:earliest(p,after,s.duration);if(at+s.duration+(nextFixed?routing.estimateMinutes(s.area,nextFixed.area,request.transportation)+buffer:0)>boundary)break;s.start=at;check(s);run.stops.push(s);cursor=at+s.duration;lastArea=s.area;used.add(s.placeId);remaining.shift();}
   for(const p of candidates){
    if(run.stops.filter(s=>s.source==='planner').length>=Math.max(0,3-request.existingStops.length))break;
-   const leg=routing.estimateMinutes(lastArea,p.area,request.transportation);const at=cursor+leg+buffer;
+   const leg=routing.estimateMinutes(lastArea,p.area,request.transportation);const at=earliest(p,cursor+leg+buffer,p.typical_duration_minutes);
    let reason='';
    if(used.has(p.place_id))reason='Already included';
    else if(cost+p.estimated_cost_per_person.amount_cents>request.budgetPerPerson.amountCents)reason='Over budget';

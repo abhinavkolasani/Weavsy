@@ -1,3 +1,5 @@
+> Historical baseline checklist. See TECHNICAL_HANDOFF.md for the current complete prototype.
+
 # Batch 1 acceptance — Josh + Abhinav
 
 **Not graduated.** This checklist requires founder verification after handoff. Stay in Batch 1 until every benchmark passes or Build Lab explicitly defers the item. Later-batch features and taste-only polish do not block this batch.

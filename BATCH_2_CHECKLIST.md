@@ -1,3 +1,5 @@
+> Historical baseline checklist. See TECHNICAL_HANDOFF.md for the current complete prototype.
+
 # Batch 2 acceptance — controlled place data
 
 **Founder graduation pending. Do not begin Batch 3 until Josh + Abhinav pass the benchmark or Build Lab explicitly defers an item.** User direction authorized this Batch 2 implementation; this checklist does not retrospectively assert that founders signed off Batch 1.
