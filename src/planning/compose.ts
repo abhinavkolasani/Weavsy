@@ -8,13 +8,13 @@ import { validatePlannerSelectedStops } from '../itinerary/catalogContract.ts';
 export const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 export async function compose(request: PlanningRequest, service: PlaceService = placeService, routing: TravelProvider = testTravelProvider): Promise<PlanRun> {
     const start = minutes(request.availableStartTime), end = minutes(request.requiredEndTime);
-    const run: PlanRun = { runId: crypto.randomUUID(), timestamp: new Date().toISOString(), build: 'development', request, status: 'complete', stops: [], totalCostCents: 0, unknownCostStops: [], finish: start, assumptions: [], conflicts: [], openWindows: [], candidates: [], selectedPlaceIds: [], relaxedConstraints: [], parentRunId: null };
+    const run: PlanRun = { runId: crypto.randomUUID(), timestamp: new Date().toISOString(), build: 'development', request, status: 'complete', stops: [], catalogDataStatuses: [], totalCostCents: 0, unknownCostStops: [], finish: start, assumptions: [], conflicts: [], openWindows: [], candidates: [], selectedPlaceIds: [], relaxedConstraints: [], parentRunId: null };
     const places = await service.listActivePlaces();
     const allPlaces = await service.queryPlaces({ include_inactive: true });
     const day = DAYS[(new Date(request.date + 'T12:00:00').getDay() + 6) % 7];
     const travel = request.transportation === 'walking' ? 25 : request.transportation === 'transit' ? 30 : 15, buffer = 10;
     run.assumptions.push(routing.description, 'Arrival buffer is 10 minutes; it is waived only for the first fixed stop when the exact starting place matches. Travel within a matched fictional zone is zero in the TEST matrix.');
-    run.assumptions.push(`Unknown-location travel uses a ${travel}-minute fallback; fictional zone travel varies per leg, plus ${buffer} minutes of arrival buffer; geography, traffic, fares and parking are not verified. The finish is at the final stop, without a return journey.`, 'Catalog fixtures are synthetic TEST places, not executable real-world recommendations.');
+    run.assumptions.push(`Unknown-location travel uses a ${travel}-minute fallback; fictional zone travel varies per leg, plus ${buffer} minutes of arrival buffer; geography, traffic, fares and parking are not verified. The finish is at the final stop, without a return journey.`);
     const originPlace = allPlaces.find(p => p.place_id === request.startingLocation || p.name.toLowerCase() === request.startingLocation.toLowerCase());
     const originArea = originPlace?.area ?? places.find(p => p.area === request.startingLocation)?.area ?? null;
     const fixed: PlanStop[] = [], flexible: PlanStop[] = [];
@@ -30,7 +30,7 @@ export async function compose(request: PlanningRequest, service: PlaceService = 
             run.unknownCostStops.push(s.id);
             run.assumptions.push(`${s.name}: user-supplied place; hours, location and cost are unknown. Budget compliance cannot be confirmed until its cost is verified.`);
         }
-        const stop: PlanStop = { stopId: s.id, placeId: p?.place_id ?? null, name: s.name, category: p?.category ?? 'user_activity', start: at ?? start, duration, costCents: p?.estimated_cost_per_person.amount_cents ?? null, travelMinutes: travel, bufferMinutes: buffer, source: 'user', fixed: s.fixed, reason: 'Preserved from your existing plan.', area: p?.area ?? null, note: s.note };
+        const stop: PlanStop = { stopId: s.id, placeId: p?.place_id ?? null, dataStatus: p?.data_status ?? null, name: s.name, category: p?.category ?? 'user_activity', start: at ?? start, duration, costCents: p?.estimated_cost_per_person.amount_cents ?? null, travelMinutes: travel, bufferMinutes: buffer, source: 'user', fixed: s.fixed, reason: 'Preserved from your existing plan.', area: p?.area ?? null, note: s.note };
         if (!s.fixed && (s.startTime || s.endTime))
             run.assumptions.push(`${s.name}: flexible timing may move to fit the outing; its ${duration}-minute duration is retained.`);
         (s.fixed && at !== null ? fixed : flexible).push(stop);
@@ -117,7 +117,7 @@ export async function compose(request: PlanningRequest, service: PlaceService = 
             run.candidates.push({ placeId: p.place_id, reason: reason || 'Selected: interest fit and feasible time/cost' });
             if (reason)
                 continue;
-            const s: PlanStop = { stopId: crypto.randomUUID(), placeId: p.place_id, name: p.name, category: p.category, start: at, duration: p.typical_duration_minutes, costCents: p.estimated_cost_per_person.amount_cents, travelMinutes: leg, bufferMinutes: buffer, source: 'planner', fixed: false, reason: 'Fits your interests, group, available window and estimated budget.', area: p.area, note: p.data_notes };
+            const s: PlanStop = { stopId: crypto.randomUUID(), placeId: p.place_id, dataStatus: p.data_status, name: p.name, category: p.category, start: at, duration: p.typical_duration_minutes, costCents: p.estimated_cost_per_person.amount_cents, travelMinutes: leg, bufferMinutes: buffer, source: 'planner', fixed: false, reason: 'Fits your interests, group, available window and estimated budget.', area: p.area, note: p.data_notes };
             run.stops.push(s);
             cursor = at + s.duration;
             cost += s.costCents!;
@@ -130,6 +130,8 @@ export async function compose(request: PlanningRequest, service: PlaceService = 
     for (const s of fixed) {
         scheduleWindow(s.start, s);
         s.travelMinutes = routing.estimateMinutes(lastArea, s.area, request.transportation);
+        s.bufferMinutes = run.stops.length === 0 && originPlace?.place_id === s.placeId ? 0 : buffer;
+        if (s.start < cursor + s.travelMinutes + s.bufferMinutes) run.conflicts.push(`Insufficient travel and arrival buffer before fixed stop ${s.name}.`);
         run.stops.push(s);
         cursor = s.start + s.duration;
         if (lastArea)
@@ -147,6 +149,8 @@ export async function compose(request: PlanningRequest, service: PlaceService = 
     const validated = await validatePlannerSelectedStops(run.selectedPlaceIds.map(place_id => ({ place_id })), service);
     if (!validated.ok)
         run.conflicts.push(...validated.issues.map(i => i.message));
+    run.catalogDataStatuses = [...new Set(run.stops.flatMap(s => s.dataStatus ? [s.dataStatus] : []))];
+    if (run.catalogDataStatuses.includes('synthetic')) run.assumptions.push('Selected synthetic TEST places are fictional and are for testing only. Other catalog records retain their own verification status.');
     run.totalCostCents = cost;
     run.finish = cursor;
     if (run.conflicts.length) {

@@ -1,7 +1,9 @@
+import type { DataStatus } from '../data/types.ts';
 import type { PlanningRequest } from '../planning/types.ts';
 export interface PlanStop {
     stopId: string;
     placeId: string | null;
+    dataStatus: DataStatus | null;
     name: string;
     category: string;
     start: number;
@@ -22,6 +24,7 @@ export interface PlanRun {
     request: PlanningRequest;
     status: 'complete' | 'conflict';
     stops: PlanStop[];
+    catalogDataStatuses: DataStatus[];
     totalCostCents: number;
     unknownCostStops: string[];
     finish: number;
