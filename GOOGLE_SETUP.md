@@ -1,4 +1,6 @@
-# Google Cloud setup — required before Stage B can resume
+# Google Cloud setup — archived alternative
+
+**Archived option:** the user subsequently approved a Google-free OpenStreetMap foundation. These steps are not required to run the current app. See [WORLD_DATA_HANDOFF.md](WORLD_DATA_HANDOFF.md). No Google integration or Google Place IDs are claimed.
 
 The guest app is running at http://127.0.0.1:5174/. Stage A passed. There is no Google credential configured in this project or its current server environment. This guide is a setup handoff, not a claim that Google integration is implemented.
 

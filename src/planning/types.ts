@@ -1,3 +1,4 @@
+import type { PlaceReference } from '../world/types.ts';
 export const STARTING_STATES = [
   { value: 'nothing-planned', label: 'Nothing planned', hint: 'Start from scratch.' },
   { value: 'anchor', label: 'Anchor', hint: 'One place or activity to build around.' },
@@ -19,9 +20,12 @@ export interface ExistingStopDraft {
   endTime: string;
   durationMinutes: string;
   note: string;
+  place?: PlaceReference | null;
+  entryKind?: 'place' | 'activity';
 }
 export interface PlanningDraft {
   startingLocation: string;
+  startingPlace?: PlaceReference | null;
   date: string;
   availableStartTime: string;
   requiredEndTime: string;
@@ -41,6 +45,9 @@ export interface ExistingStop {
   endTime: string | null;
   durationMinutes: number | null;
   note: string | null;
+  place?: PlaceReference | null;
+  source?: 'user';
+  entryKind?: 'place' | 'activity';
   constraints: {
     preservePlace: boolean;
     preserveStartTime: boolean;
@@ -50,6 +57,7 @@ export interface ExistingStop {
 }
 export interface PlanningRequest {
   startingLocation: string;
+  startingPlace?: PlaceReference | null;
   date: string;
   availableStartTime: string;
   requiredEndTime: string;

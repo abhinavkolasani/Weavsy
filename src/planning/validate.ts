@@ -1,5 +1,6 @@
 import { STARTING_STATES } from './types.ts';
 import type { PlanningDraft, PlanningRequest, ValidationErrors, ValidationResult } from './types.ts';
+import { isPlaceReference } from '../world/reference.ts';
 export const validTime = (time: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
 export const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 export function validDate(date: string) {
@@ -7,9 +8,11 @@ export function validDate(date: string) {
   const parsed = new Date(`${date}T12:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
-export function validateRequest(draft: PlanningDraft): ValidationResult {
+export function validateRequest(draft: PlanningDraft, options: {requirePlaceSelections?: boolean} = {}): ValidationResult {
   const errors: ValidationErrors = {};
   if (!draft.startingLocation.trim()) errors.startingLocation = 'Enter your starting location.';
+  if (draft.startingPlace && (!isPlaceReference(draft.startingPlace) || draft.startingPlace.display_name !== draft.startingLocation)) errors.startingLocation = 'Search and select your location again.';
+  if (options.requirePlaceSelections && !draft.startingPlace) errors.startingLocation = 'Choose your location from the search results.';
   if (!validDate(draft.date)) errors.date = 'Choose a valid date.';
   if (!validTime(draft.availableStartTime)) errors.availableStartTime = 'Enter an available start time.';
   if (!validTime(draft.requiredEndTime)) errors.requiredEndTime = 'Enter a required end time.';
@@ -26,6 +29,10 @@ export function validateRequest(draft: PlanningDraft): ValidationResult {
     const prefix = `stop.${stop.id}.`;
     const requiredFixed = index === 0 && (draft.startingState === 'anchor' || draft.startingState === 'reservation');
     if (!stop.name.trim()) errors[prefix + 'name'] = 'Enter a place or activity name.';
+    if (stop.entryKind && !['place','activity'].includes(stop.entryKind)) errors[prefix + 'name'] = 'Choose a place or an activity.';
+    if (stop.place && (!isPlaceReference(stop.place) || stop.place.display_name !== stop.name)) errors[prefix + 'name'] = 'Search and select this place again.';
+    if (stop.entryKind === 'activity' && stop.place) errors[prefix + 'name'] = 'Clear the selected place before using an activity without a venue.';
+    if (options.requirePlaceSelections && stop.entryKind !== 'activity' && !stop.place) errors[prefix + 'name'] = 'Choose this place from the search results, or select an activity without a venue.';
     if (requiredFixed && !stop.fixed) errors[prefix + 'fixed'] = 'Your anchor or reservation must remain fixed.';
     if (draft.startingState === 'reservation' && index === 0 && !stop.startTime) errors[prefix + 'startTime'] = 'Enter the fixed start time for your reservation.';
     if (stop.startTime && !validTime(stop.startTime)) errors[prefix + 'startTime'] = 'Enter a valid start time.';
@@ -39,6 +46,7 @@ export function validateRequest(draft: PlanningDraft): ValidationResult {
   if (Object.keys(errors).length) return { ok: false, errors };
   const request: PlanningRequest = {
     startingLocation: draft.startingLocation.trim(), date: draft.date,
+    ...(draft.startingPlace !== undefined ? {startingPlace: draft.startingPlace ? structuredClone(draft.startingPlace) : null} : {}),
     availableStartTime: draft.availableStartTime, requiredEndTime: draft.requiredEndTime,
     budgetPerPerson: { amountCents: Math.round(Number(draft.budgetPerPerson) * 100), currency: 'USD' },
     groupSize: Number(draft.groupSize), transportation: draft.transportation as PlanningRequest['transportation'],
@@ -49,6 +57,7 @@ export function validateRequest(draft: PlanningDraft): ValidationResult {
       endTime: stop.timingDetail === 'end-time' ? stop.endTime : null,
       durationMinutes: stop.timingDetail === 'duration' ? Number(stop.durationMinutes) : null,
       note: stop.note.trim() || null,
+      ...(stop.place !== undefined || stop.entryKind !== undefined ? {place:stop.place ? structuredClone(stop.place) : null,source:'user' as const,entryKind:stop.entryKind ?? 'place'} : {}),
       constraints: { preservePlace: stop.fixed, preserveStartTime: stop.fixed && !!stop.startTime, preserveEndTime: stop.fixed && stop.timingDetail === 'end-time', preserveDuration: stop.fixed && stop.timingDetail === 'duration' },
     })),
   };

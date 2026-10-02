@@ -1,5 +1,7 @@
 # Stage A — guest experience correction
 
+Historical Stage A verification. The Google setup gate below was subsequently superseded by the user-approved OpenStreetMap foundation; see [WORLD_DATA_HANDOFF.md](WORLD_DATA_HANDOFF.md) for current behavior and regression results.
+
 Stage A is implemented and independently retested. Stage B implementation is stopped at the manual Google Cloud configuration gate. See `GOOGLE_SETUP.md` and `BATCH_HANDOFF.md`.
 
 Budget investigation: the existing validation already converts $40 per person to `amountCents: 4000` and retains group size 5 independently. No division by group size exists in this checkout. An $8 individual stop estimate could appear in results, while the entered $40 ceiling was absent; budget versus estimated spend was easy to confuse. The consumer summary now prominently says “About $40 per person.” A regression locks this input pair at 4000 cents per person.

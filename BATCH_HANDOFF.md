@@ -1,5 +1,7 @@
 # Stage A result and Stage B configuration handoff
 
+Historical Google handoff, superseded by the user's approved provider substitution. The current app uses OpenStreetMap and needs no Google credential. See [WORLD_DATA_HANDOFF.md](WORLD_DATA_HANDOFF.md) for the current report and manual tests.
+
 October 2, 2026. Existing React/TypeScript/Vite frontend and Node/SQLite backend retained. Stage A code commit: `8a5b346`. Independent Stage A verification passed. Stage B is not implemented: the user explicitly required a stop for manual Google Cloud setup, and no key is configured.
 
 1. **Stage A fixes:** “Where are you?” label, local-today date, explicit hour/minute/AM-PM controls, 12-hour summaries, prominent entered budget, cleaner mobile fields/cards and consumer request summary. Nothing planned remains the fresh default; all five states remain available.

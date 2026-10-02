@@ -17,6 +17,7 @@
     "catalog:import": "node --experimental-strip-types scripts/import-catalog.ts"
   },
   "dependencies": {
+    "maplibre-gl": "6.11.2",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },

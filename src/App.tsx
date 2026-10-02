@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PlanningForm } from './components/PlanningForm';
 import { RequestSummary } from './components/RequestSummary';
 import { createFounderMetadata } from './founder/metadata';
-import { PlanResults } from './components/PlanResults';
-import type { PlanRun } from './itinerary/plan';
+import { PlaceLab } from './founder/PlaceLab';
 import { initialState, restoreState, SESSION_KEY } from './planning/state';
 import type { PlannerState } from './planning/state';
 import type { PlanningRequest } from './planning/types';
@@ -15,7 +14,7 @@ catch {
 } }
 export function App() {
     const [state, setState] = useState<PlannerState>(loadSession);
-    const [run, setRun] = useState<PlanRun | null>(null);
+    const [run, setRun] = useState<{runId:string} | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [storageUnavailable, setStorageUnavailable] = useState(false);
@@ -45,7 +44,7 @@ export function App() {
                 throw new Error((result.error || 'Could not save your outing'));
             setRun(result);
             try { sessionStorage.setItem('outing-last-run', result.runId); } catch { setStorageUnavailable(true); }
-            setState(current => ({ ...current, screen: 'results', submission: { request, result: { status: 'not-generated', primaryItinerary: null }, metadata: createFounderMetadata() } }));
+            setState(current => ({ ...current, screen: 'results', submission: { request:result.request ?? request, result: { status: 'not-generated', primaryItinerary: null }, metadata: createFounderMetadata() } }));
         }
         catch (e) {
             setError(e instanceof Error ? e.message : 'Could not build the plan. Your draft is saved.');
@@ -61,7 +60,7 @@ export function App() {
     {storageUnavailable && <p className="storage-notice" role="status">This browser can’t save the current tab’s draft. You can still plan, but refreshing will clear your input.</p>}
     {error && <p role="alert" className="storage-notice">{error}</p>}
     {busy && <p role="status">Saving your outing…</p>}
-    {state.screen === 'results' && run && window.location.pathname === '/founder' ? <PlanResults run={run} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : state.screen === 'results' && state.submission ? <RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : <PlanningForm draft={state.draft} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
+    {window.location.pathname.startsWith('/founder') ? <PlaceLab initialOrigin={state.draft.startingPlace}/> : state.screen === 'results' && state.submission ? <RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : <PlanningForm draft={state.draft} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
     <footer className="app-footer"><span>No account needed.</span><span>Draft kept in this browser tab only.</span></footer>
   </main></div>;
 }
