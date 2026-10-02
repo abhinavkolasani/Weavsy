@@ -46,6 +46,10 @@ export function assertValidCatalog(input: unknown): asserts input is readonly Pl
     if (!['verified', 'estimated', 'synthetic'].includes(String(place.data_status))) fail('data_status', 'use verified, estimated or synthetic.');
     if (place.data_status === 'synthetic' && (!text(place.name) || !place.name.startsWith('TEST_'))) fail('name', 'synthetic records must have a visible TEST_ name.');
 
+    if (place.data_status !== 'synthetic') {
+      const v = place.verification;
+      if (!record(v) || !text(v.source_reference) || !text(v.verified_at) || Number.isNaN(Date.parse(String(v.verified_at))) || !Array.isArray(v.estimated_fields) || !v.estimated_fields.every(text)) fail('verification', 'real records require source_reference, verified_at and estimated_fields.');
+    }
     const group = place.group_size;
     if (group !== null) {
       if (!record(group)) fail('group_size', 'use null or a group-size object.');

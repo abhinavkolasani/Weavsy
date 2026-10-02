@@ -12,6 +12,7 @@ export interface OpeningInterval {
   closes: string; // Local HH:mm (or 24:00), exclusive.
 }
 export interface Place {
+  readonly verification?: { readonly source_reference: string; readonly verified_at: string; readonly estimated_fields: readonly string[] };
   readonly place_id: string;
   readonly name: string;
   readonly category: PlaceCategory;

@@ -8,11 +8,13 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "node --experimental-strip-types server/start.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "catalog:inspect": "node --experimental-strip-types scripts/inspect-catalog.ts"
+    "catalog:inspect": "node --experimental-strip-types scripts/inspect-catalog.ts",
+    "start": "node --experimental-strip-types server/start.mjs --production",
+    "catalog:import": "node --experimental-strip-types scripts/import-catalog.ts"
   },
   "dependencies": {
     "react": "19.2.6",

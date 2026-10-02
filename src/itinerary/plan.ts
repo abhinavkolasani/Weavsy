@@ -1,0 +1,3 @@
+import type { PlanningRequest } from '../planning/types.ts';
+export interface PlanStop { stopId:string; placeId:string|null; name:string; category:string; start:number; duration:number; costCents:number|null; travelMinutes:number; bufferMinutes:number; source:'user'|'planner'; fixed:boolean; reason:string; area:string|null; note:string|null }
+export interface PlanRun { runId:string; timestamp:string; build:string; request:PlanningRequest; status:'complete'|'conflict'; stops:PlanStop[]; totalCostCents:number; unknownCostStops:string[]; finish:number; assumptions:string[]; conflicts:string[]; openWindows:{start:number;end:number}[]; candidates:{placeId:string;reason:string}[]; selectedPlaceIds:string[]; relaxedConstraints:string[]; parentRunId:string|null }
