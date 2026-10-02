@@ -20,7 +20,7 @@ React guest form preserves existing session drafts and structured fixed/flexible
 
 ## Verification and case breaking
 
-36 tests passed: all five states, four-friends Saturday 2–9 PM $60 driving food+active smoke, 7 PM fixed preservation, end-only preservation, insufficient travel between fixed stops, zero budget, catalog IDs/inactive handling, legacy draft/session behavior and SQLite connection restart/rebuild linkage. Build passed. Browser QA performed separately on the running preview.
+37 tests passed: all five states, four-friends Saturday 2–9 PM $60 driving food+active smoke, 7 PM fixed preservation, end-only preservation, insufficient travel between fixed stops, zero budget, catalog IDs/inactive handling, legacy draft/session behavior and SQLite connection restart/rebuild linkage. Build passed. Browser QA performed separately on the running preview.
 
 Known limitations: local same-day time windows; estimated prices do not guarantee real costs; unknown costs prevent confirmed total-budget compliance; no live routing/geocoding; greedy deterministic selection can reject some feasible complex cases; no swaps/locks/social/accounts/booking. TEST plans are for case breaking only. Unknown custom-stop hours cannot be verified. Fixed custom times are preserved rather than fabricated or moved.
 
