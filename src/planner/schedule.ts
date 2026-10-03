@@ -3,6 +3,7 @@ import type { RouteMatrix } from '../routing/types.ts';
 import { WEEKDAYS } from '../world/types.ts';
 import { toMinutes } from '../planning/validate.ts';
 import { addDays } from '../planning/timeline.ts';
+import { suggestedStopCount } from './pacing.ts';
 
 export function fixedTime(candidate:CandidatePlace) {return candidate.fixedStart ?? (candidate.fixedEnd!==null?candidate.fixedEnd-candidate.duration.value:null);}
 export function findWindows(input:PlannerInput, existing:CandidatePlace[]):OpenWindow[] {
@@ -44,7 +45,7 @@ function nextOpen(candidate:CandidatePlace,date:string,arrival:number):number|nu
 }
 export function scoreCandidate(input:PlannerInput,candidate:CandidatePlace) {
   const target=input.request.budgetPerPerson.amountCents;
-  const factors={vibe:candidate.vibeTags.includes(input.intent.mood)?12:input.intent.mood==='playful'&&candidate.vibeTags.includes('fun')?12:0,interests:input.intent.interests.filter(t=>candidate.interestTags.includes(t)).length*6,role:input.intent.desiredRoles.includes(candidate.role)?20:0,budget:Math.max(-20,8-Math.max(0,candidate.cost.value-target*.7)/200),category:candidate.category==='Restaurant'&&target>=4500?12:candidate.category==='Casual food'&&target<3000?8:['Active activity','Bowling'].includes(candidate.category)&&input.intent.mood==='active'?12:0,identity:candidate.userStopId?40:0,uncertainty:candidate.hoursChecked&&candidate.openingInformation?.weekly?2:0};
+  const factors={vibe:candidate.vibeTags.includes(input.intent.mood)?12:input.intent.mood==='playful'&&candidate.vibeTags.includes('fun')?12:0,interests:input.intent.interests.filter(t=>candidate.interestTags.includes(t)).length*6,role:input.intent.desiredRoles.includes(candidate.role)?20:0,budget:Math.max(-20,8-Math.max(0,candidate.cost.value-target*.7)/200),category:candidate.category==='Restaurant'&&target>=4500?12:candidate.category==='Casual food'&&target<3000?8:['Active activity','Bowling'].includes(candidate.category)&&input.intent.mood==='active'?30:0,identity:candidate.userStopId?40:0,uncertainty:candidate.hoursChecked&&candidate.openingInformation?.weekly?2:0};
   return {factors,total:Object.values(factors).reduce((sum,v)=>sum+v,0)};
 }
 export interface ScheduleResult { stops:ScheduledStop[]; rejected:Rejection[]; conflict:string|null }
@@ -54,7 +55,8 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
   const reject=(c:CandidatePlace,code:string,detail:string)=>rejected.set(`${c.id}:${code}`,{placeId:c.id,code,detail});
   const mandatory=candidates.filter(c=>c.userStopId);
   const fixed=mandatory.filter(c=>fixedTime(c)!==null).sort((a,b)=>fixedTime(a)!-fixedTime(b)!);
-  const maxStops=Math.max(mandatory.length,Math.min(4,mandatory.length+input.intent.desiredRoles.length));
+  const targetStops=Math.max(mandatory.length,suggestedStopCount(input.desiredFinish-input.start));
+  const maxStops=targetStops;
   const fixedFinish=Math.max(input.desiredFinish,...fixed.map(c=>(c.fixedEnd??fixedTime(c)!+c.duration.value)));
   const limit=Math.min(input.start+1440,fixedFinish+15);
   const target=input.request.budgetPerPerson.amountCents;
@@ -67,7 +69,7 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
   type State={stops:ScheduledStop[];cursor:number;previous:number;cost:number;score:number};
   let beam:State[]=[{stops:[],cursor:input.start,previous:0,cost:0,score:0}];
   let best:State|null=null,bestValue=-Infinity,mandatoryOnly:State|null=null;
-  const quality=(s:State)=>s.score-Math.max(0,s.cost-target)/100*1.5-s.stops.length*5;
+  const quality=(s:State)=>s.score-Math.max(0,s.cost-target)/100*1.5-s.stops.length*5-Math.abs(s.stops.length-targetStops)*30;
   for(let depth=0;depth<maxStops;depth++) {
     const next:State[]=[];
     for(const state of beam) {
@@ -100,6 +102,8 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
           if(!leg || departure+leg.minutes+(leg.distanceMetres===0?0:leg.actualMode==='driving'?10:5)>fixedTime(nextFixed)!){reject(c,'IMPOSSIBLE_BEFORE_FIXED_STOP','Visit would make the next fixed commitment unreachable.');continue;}
         }
         const cost=state.cost+c.cost.value;
+        const remainingCommitments=mandatory.filter(m=>!used.has(m.id)&&m.id!==c.id).reduce((sum,m)=>sum+m.cost.value,0);
+        if(!c.userStopId&&!desired.includes(c.role)&&cost+remainingCommitments>Math.max(baseline,target)){reject(c,'EXTRA_BUDGET_MISMATCH','An added break would use budget reserved for the outing.');continue;}
         if(cap!==null&&cost>cap){reject(c,'HARD_BUDGET_CAP','Estimated spend exceeds the explicitly stated cap.');continue;}
         if(!c.userStopId&&cost>severeLimit){reject(c,'SEVERE_BUDGET_MISMATCH','Estimated spend would substantially exceed the target.');continue;}
         const wait=Math.max(0,arrival-ready);
@@ -110,8 +114,9 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
         const score=scoreCandidate(input,c).total-travel.minutes*.65-wait*.15-timingPreference-outdoorLate-dessertBeforeMeal;
         const stop:ScheduledStop={candidate:c,arrival,departure,travel,bufferMinutes:buffer,waitMinutes:wait,score};
         const ns:State={stops:[...state.stops,stop],cursor:departure,previous:i+1,cost,score:state.score+score};next.push(ns);
-        if(mandatory.length&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&(!mandatoryOnly||quality(ns)>quality(mandatoryOnly)))mandatoryOnly=ns;
-        if(mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&desired.every(r=>covered(r,ns.stops))) {
+        const extrasOverBudget=cost>Math.max(baseline,target)&&ns.stops.some(s=>!s.candidate.userStopId&&!desired.includes(s.candidate.role)&&s.candidate.cost.value>0);
+        if(!extrasOverBudget&&mandatory.length&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&(!mandatoryOnly||quality(ns)>quality(mandatoryOnly)))mandatoryOnly=ns;
+        if(!extrasOverBudget&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&desired.every(r=>covered(r,ns.stops))) {
           const value=quality(ns);if(value>bestValue){best=ns;bestValue=value;}
         }
       }

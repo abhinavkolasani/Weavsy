@@ -16,7 +16,7 @@ export default {
         response = await createApi({ env, store: createCloudStore(env.DB) })(req);
       } else {
         if (!['/', '/terms', '/privacy'].includes(url.pathname) && !url.pathname.startsWith('/assets/')) return new Response('Not found', { status: 404 });
-        response = await env.ASSETS.fetch(req);
+        response = await env.ASSETS.fetch(url.pathname.startsWith('/assets/') ? req : new Request(new URL('/index.html', url), req));
       }
       const headers = new Headers(response.headers);
       headers.set('X-Content-Type-Options', 'nosniff'); headers.set('Referrer-Policy', 'strict-origin-when-cross-origin'); headers.set('X-Frame-Options', 'DENY');

@@ -11,6 +11,7 @@ import { isPlaceReference } from '../src/world/reference.ts';
 import { outingClock } from '../src/planning/clock.ts';
 import { outingWindow, stopTiming, timelineClock, timelineDay } from '../src/planning/timeline.ts';
 import { distanceMetres, WorldError } from './worldProvider.ts';
+import { suggestedStopCount } from '../src/planner/pacing.ts';
 const clock=timelineClock;
 
 export function finalConflicts(request:PlanningRequest,stops:ScheduledStop[]):string[] {
@@ -57,6 +58,11 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       if(input.intent.mood==='active'&&!searches.includes('bowling'))searches.push('bowling');
       // Free outdoor alternatives keep a lower budget useful without inventing businesses.
       if(!searches.includes('park')&&(input.intent.mood==='active'||request.budgetPerPerson.amountCents<3000))searches.push('park');
+      // Longer outings need a broader mix, not repeated meals or the same activity twice.
+      const pacing=suggestedStopCount(input.desiredFinish-input.start);
+      if(pacing>=3)for(const type of ['park',/dessert|sweet|ice cream/i.test(request.vibeInterests)?'dessert':'cafe'] as PlaceSearchType[])if(!searches.includes(type))searches.push(type);
+      if(pacing>=4&&!searches.includes('dessert'))searches.push('dessert');
+      if(pacing>=5&&!searches.includes('shopping'))searches.push('shopping');
       const jobs=centers.flatMap(center=>searches.map(type=>({center,type})));
       for(let batch=0;batch<jobs.length;batch+=4) {
         const chunk=jobs.slice(batch,batch+4);
@@ -67,7 +73,7 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
           if(pool.some(c=>c.place.display_name.toLowerCase()===place.display_name.toLowerCase()&&distanceMetres(c.place,place)<100)){diagnostics.rejected.push({placeId:place.provider_place_id,code:'DUPLICATE_PLACE',detail:'Nearby same-name record.'});continue;}
           const c=candidateFromPlace(place);
           if(place.provider==='google'&&place.primary_type==='snack_bar'){diagnostics.rejected.push({placeId:c.id,code:'PUBLIC_ACCESS_UNKNOWN',detail:'Snack counters may be inside restricted facilities; no public access confirmation is connected.'});continue;}
-          if(type==='park'&&input.intent.desiredRoles.includes('main-activity')&&(input.intent.mood==='active'||request.budgetPerPerson.amountCents<3000)){c.role='main-activity';c.category='Outdoor activity';c.estimateNotes.push('An outdoor walk is the lower-cost active option.');}
+          if(type==='park'&&input.intent.desiredRoles.includes('main-activity')&&request.budgetPerPerson.amountCents<3000){c.role='main-activity';c.category='Outdoor activity';c.estimateNotes.push('An outdoor walk is the lower-cost active option.');}
           if(type==='dessert'&&c.role==='coffee')c.role='dessert';
           pool.push(c);
         }
@@ -80,8 +86,12 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       }
       // Keep all user choices and preserve a cheaper alternative for each role before building the route matrix.
       const ordered=pool.filter(c=>!c.userStopId).sort((a,b)=>scoreCandidate(input,b).total-scoreCandidate(input,a).total||distanceMetres(request.startingPlace!,a.place)-distanceMetres(request.startingPlace!,b.place));
-      const roleCounts=new Map<string,number>();
-      const automatic=request.startingPlace.provider==='google'?ordered.filter(c=>{const count=roleCounts.get(c.role)??0;roleCounts.set(c.role,count+1);const cheapest=ordered.filter(p=>p.role===c.role).reduce((a,b)=>a.cost.value<=b.cost.value?a:b);return count<3||c.id===cheapest.id;}):ordered;
+      // Reserve a candidate for every role and its cheaper alternative before extra choices.
+      // This keeps a small route matrix without letting restaurants crowd out longer-outing breaks.
+      const diverse:CandidatePlace[]=[];
+      for(const role of new Set(ordered.map(c=>c.role)))diverse.push(ordered.find(c=>c.role===role)!);
+      for(const role of new Set(ordered.map(c=>c.role))){const cheap=ordered.filter(c=>c.role===role).reduce((a,b)=>a.cost.value<=b.cost.value?a:b);if(!diverse.some(c=>c.id===cheap.id))diverse.push(cheap);}
+      const automatic=request.startingPlace.provider==='google'?[...diverse,...ordered.filter(c=>!diverse.some(d=>d.id===c.id))]:ordered;
       pool=[...existing,...automatic.slice(0,Math.max(0,(request.startingPlace.provider==='google'?13:22)-existing.length))];
       diagnostics.candidates=pool;
       if(!pool.length)return fail('No usable real places were returned near your starting point. Try a nearby address or a broader interest.');

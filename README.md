@@ -25,6 +25,8 @@ Select a Google result for the origin and every venue. Unselected text is not ve
 
 The planner uses a bounded candidate shortlist, real Google opening hours when provided, and directional Routes API driving durations without live traffic. A 27-second response deadline protects against slow services. Costs and durations are explicitly category estimates. Missing details stay unknown; no fake place or estimated straight-line travel fallback is used. Transit scheduling is deferred.
 
+Stop count responds to available time: roughly 2 for 2–3 hours, 3 for 4 hours, 4 for 6 hours, 5 for 8 hours and 6 for 10+ hours, when feasible. Longer outings discover additional cafés, dessert, walking and browsing stops. Budget, actual routes, opening hours and fixed commitments still determine what fits; the planner does not repeat meals or activities merely to fill a quota. All existing user places stay mandatory even when they exceed the suggested count. The route shortlist stays bounded and scheduling uses the existing 64-state beam.
+
 Google identity/address/hours stay in active memory. Durable browser drafts and SQLite runs retain provider IDs and user decisions, not a permanent copy of Google content. Refresh restores the form and fetches those IDs again; Build refreshes the itinerary and routes. Old OSM selections require explicit Google reselection, preserving existing times, notes and fixed status.
 
 `/founder` is a separate candidate-search surface. `/founder/runs` inspects active run diagnostics; after a restart, its durable record contains IDs and product metrics. Google place data appears on a Google map with attribution. The old OSM and synthetic catalog adapters remain isolated in engineering tests.

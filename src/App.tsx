@@ -62,9 +62,7 @@ export function App() {
             setBusy(false);
         }
     }
-    useEffect(() => { let id: string | null = null; try { id = sessionStorage.getItem('outing-last-run'); } catch { setStorageUnavailable(true); } if (id)
-        fetch('/api/runs/' + id).then(r => r.ok ? r.json() : null).then(r => { if (r)
-            setRun(r); }).catch(() => { }); }, []);
+    useEffect(() => { let id: string | null = null; try { id = sessionStorage.getItem('outing-last-run'); } catch { setStorageUnavailable(true); } if (id) setRun({runId:id}); }, []);
     return <div className="app"><header className="app-header"><strong>Outing planner</strong><span className="version">Plan your time together</span></header><main ref={headingRef} tabIndex={-1}>
     {storageUnavailable && <p className="storage-notice" role="status">This browser can’t save the current tab’s draft. You can still plan, but refreshing will clear your input.</p>}
     {error && <p role="alert" className="storage-notice">{error}</p>}

@@ -1,0 +1,426 @@
+[
+  {
+    "name": "3-hour-outing",
+    "elapsedMs": 556,
+    "runId": "17ac1626-f59c-4639-8cf8-3d95d7a3d0bc",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "13:00",
+      "requiredEndTime": "16:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 2,
+    "costPerPersonCents": 5300,
+    "finish": "16:05",
+    "finishDayOffset": 0,
+    "stops": [
+      {
+        "placeId": "ChIJA9DQKQDHwoARqAQsC3kmV2o",
+        "userStopId": null,
+        "arrival": "13:15",
+        "arrivalDayOffset": 0,
+        "departure": "14:30",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "meal"
+      },
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "14:45",
+        "arrivalDayOffset": 0,
+        "departure": "16:05",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      }
+    ]
+  },
+  {
+    "name": "4-hour-outing",
+    "elapsedMs": 567,
+    "runId": "cdf95c7a-2f0c-47d1-a16a-ce0357df62a2",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "13:00",
+      "requiredEndTime": "17:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 3,
+    "costPerPersonCents": 5300,
+    "finish": "17:10",
+    "finishDayOffset": 0,
+    "stops": [
+      {
+        "placeId": "ChIJA9DQKQDHwoARqAQsC3kmV2o",
+        "userStopId": null,
+        "arrival": "13:15",
+        "arrivalDayOffset": 0,
+        "departure": "14:30",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "meal"
+      },
+      {
+        "placeId": "ChIJwctUG0_GwoAROZBOlLcg5AU",
+        "userStopId": null,
+        "arrival": "14:45",
+        "arrivalDayOffset": 0,
+        "departure": "15:35",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "walk-explore"
+      },
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "15:50",
+        "arrivalDayOffset": 0,
+        "departure": "17:10",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      }
+    ]
+  },
+  {
+    "name": "6-hour-outing",
+    "elapsedMs": 711,
+    "runId": "c3ff6ddd-585f-4779-993c-8bc1c488eaba",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "13:00",
+      "requiredEndTime": "19:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 4,
+    "costPerPersonCents": 6800,
+    "finish": "18:25",
+    "finishDayOffset": 0,
+    "stops": [
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "13:15",
+        "arrivalDayOffset": 0,
+        "departure": "14:35",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      },
+      {
+        "placeId": "ChIJ9beF2kfGwoARkYRG3aKe8tY",
+        "userStopId": null,
+        "arrival": "14:50",
+        "arrivalDayOffset": 0,
+        "departure": "15:50",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "casual-activity"
+      },
+      {
+        "placeId": "ChIJ0eEFJwDHwoARL_YL79yygFU",
+        "userStopId": null,
+        "arrival": "16:05",
+        "arrivalDayOffset": 0,
+        "departure": "17:20",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "meal"
+      },
+      {
+        "placeId": "ChIJwctUG0_GwoAROZBOlLcg5AU",
+        "userStopId": null,
+        "arrival": "17:35",
+        "arrivalDayOffset": 0,
+        "departure": "18:25",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "walk-explore"
+      }
+    ]
+  },
+  {
+    "name": "8-hour-outing",
+    "elapsedMs": 754,
+    "runId": "293410e3-acdf-4630-b038-28f8204c3f3c",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "13:00",
+      "requiredEndTime": "21:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 5,
+    "costPerPersonCents": 6800,
+    "finish": "19:25",
+    "finishDayOffset": 0,
+    "stops": [
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "13:15",
+        "arrivalDayOffset": 0,
+        "departure": "14:35",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      },
+      {
+        "placeId": "ChIJ9beF2kfGwoARkYRG3aKe8tY",
+        "userStopId": null,
+        "arrival": "14:50",
+        "arrivalDayOffset": 0,
+        "departure": "15:50",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "casual-activity"
+      },
+      {
+        "placeId": "ChIJ0eEFJwDHwoARL_YL79yygFU",
+        "userStopId": null,
+        "arrival": "16:05",
+        "arrivalDayOffset": 0,
+        "departure": "17:20",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "meal"
+      },
+      {
+        "placeId": "ChIJwctUG0_GwoAROZBOlLcg5AU",
+        "userStopId": null,
+        "arrival": "17:35",
+        "arrivalDayOffset": 0,
+        "departure": "18:25",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "walk-explore"
+      },
+      {
+        "placeId": "ChIJz6-U4EfGwoARpNxYWinayTE",
+        "userStopId": null,
+        "arrival": "18:40",
+        "arrivalDayOffset": 0,
+        "departure": "19:25",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "shopping-browse"
+      }
+    ]
+  },
+  {
+    "name": "midnight-finish",
+    "elapsedMs": 714,
+    "runId": "cd60e57d-8307-47b5-850d-af1b19a6d538",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "20:00",
+      "requiredEndTime": "00:00",
+      "endDayOffset": 1,
+      "endDate": "2026-10-04",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 3,
+    "costPerPersonCents": 4000,
+    "finish": "23:40",
+    "finishDayOffset": 0,
+    "stops": [
+      {
+        "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+        "userStopId": null,
+        "arrival": "20:15",
+        "arrivalDayOffset": 0,
+        "departure": "21:00",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "meal"
+      },
+      {
+        "placeId": "ChIJv8jmK0_GwoAR3eaefXf-5MM",
+        "userStopId": null,
+        "arrival": "21:15",
+        "arrivalDayOffset": 0,
+        "departure": "22:05",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "walk-explore"
+      },
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "22:20",
+        "arrivalDayOffset": 0,
+        "departure": "23:40",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      }
+    ]
+  },
+  {
+    "name": "fixed-dinner-next-day",
+    "elapsedMs": 1217,
+    "runId": "6fea0226-5225-4920-8db1-7929c07c3075",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "20:00",
+      "requiredEndTime": "03:00",
+      "endDayOffset": 1,
+      "endDate": "2026-10-04",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "reservation",
+      "existingStops": [
+        {
+          "id": "fa31c28f-2006-4036-90ee-4865ee3d7f79",
+          "name": "",
+          "fixed": true,
+          "startTime": "00:30",
+          "endTime": "01:30",
+          "startDayOffset": 1,
+          "endDayOffset": 1,
+          "durationMinutes": null,
+          "note": "Keep this late dinner",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": true,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJ46bPF3nPwoARoaAUfJqh_PY"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "stopCount": 4,
+    "costPerPersonCents": 7600,
+    "finish": "01:30",
+    "finishDayOffset": 1,
+    "stops": [
+      {
+        "placeId": "ChIJB5ElqHfPwoARKPMRP3IMw5g",
+        "userStopId": null,
+        "arrival": "20:25",
+        "arrivalDayOffset": 0,
+        "departure": "21:00",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "coffee"
+      },
+      {
+        "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+        "userStopId": null,
+        "arrival": "21:25",
+        "arrivalDayOffset": 0,
+        "departure": "22:45",
+        "departureDayOffset": 0,
+        "fixed": false,
+        "role": "main-activity"
+      },
+      {
+        "placeId": "ChIJlUGbFXnPwoARqPsrcEM4VH4",
+        "userStopId": null,
+        "arrival": "23:10",
+        "arrivalDayOffset": 0,
+        "departure": "00:10",
+        "departureDayOffset": 1,
+        "fixed": false,
+        "role": "casual-activity"
+      },
+      {
+        "placeId": "ChIJ46bPF3nPwoARoaAUfJqh_PY",
+        "userStopId": "fa31c28f-2006-4036-90ee-4865ee3d7f79",
+        "arrival": "00:30",
+        "arrivalDayOffset": 1,
+        "departure": "01:30",
+        "departureDayOffset": 1,
+        "fixed": true,
+        "role": "meal"
+      }
+    ]
+  }
+]

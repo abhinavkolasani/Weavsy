@@ -6,7 +6,7 @@ const estimate=(value:number,low:number,high:number,note:string):ProductEstimate
 export function candidateFromPlace(place:PlaceReference, user?:ExistingStop, timingContext:Pick<PlanningRequest,'availableStartTime'>={availableStartTime:'00:00'}):CandidatePlace {
   const timing=user?stopTiming(timingContext,user):null;
   let type=place.primary_type??'unknown';
-  if(place.provider==='google'&&['diner','bistro','food_court','snack_bar'].includes(type))type='fast_food';
+  if(place.provider==='google'&&['diner','bistro','food_court','snack_bar','meal_delivery','meal_takeaway'].includes(type))type='fast_food';
   if(type==='movie_theater')type='cinema';
   if(type==='amusement_park')type='theme_park';
   if(type==='coffee_shop')type='cafe';

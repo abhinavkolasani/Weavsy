@@ -56,8 +56,9 @@ test('public rate limits are shared by independent database adapters and exclude
   assert.equal(JSON.stringify(sqlite.prepare('SELECT * FROM request_limits').all()).includes('192.0.2.42'), false); sqlite.close();
 });
 test('cloud entry point refuses private files, founder paths and cross-site API posts', async () => {
-  const { sqlite, db } = database(); const env = { DB: db, ASSETS: { fetch: async () => new Response('TEST frontend') } };
+  const { sqlite, db } = database(); const env = { DB: db, ASSETS: { fetch: async (r:Request) => new URL(r.url).pathname==='/index.html'?new Response('TEST frontend'):new Response('Not found',{status:404}) } };
   for (const path of ['/.env.local', '/server/start.mjs', '/founder', '/founder/runs', '/api/runs/private']) assert.equal((await cloudWorker.fetch(request(path), env)).status, 404);
   assert.equal((await cloudWorker.fetch(request('/api/plans', {}, { Origin: 'https://other.example' }), env)).status, 403);
   const root = await cloudWorker.fetch(request('/'), env); assert.equal(root.status, 200); assert.equal(root.headers.get('X-Content-Type-Options'), 'nosniff'); sqlite.close();
+  for(const path of ['/terms','/privacy'])assert.equal((await cloudWorker.fetch(request(path),env)).status,200);
 });
