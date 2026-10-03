@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+const base='http://127.0.0.1:5174';
+const checks=[];
+let addressAlias=null;
+async function call(path,body){const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(30000)});const data=await r.json();if(!r.ok)throw new Error(data.error);return data;}
+async function selected(query){const suggestions=await call('/api/world/autocomplete',{query,sessionToken:crypto.randomUUID()});assert.ok(suggestions.length);const detail=await call('/api/world/details',{placeId:suggestions[0].provider_place_id});assert.equal(detail.place.provider,'google');assert.ok(Number.isFinite(detail.place.latitude)&&Number.isFinite(detail.place.longitude));if(detail.place.provider_place_id!==suggestions[0].provider_place_id)addressAlias={suggestion:suggestions[0],place:detail.place};return detail.place;}
+const cypress=await selected('Cypress, CA');checks.push('Cypress: Google ID and coordinates');
+await selected('1600 Amphitheatre Parkway Mountain View CA');checks.push('Public street address: selectable real identity');
+await selected('Disneyland Anaheim CA');checks.push('Real Orange County anchor');
+const nearby=await call('/api/world/search',{query:'food',location:cypress,types:['food'],limit:3});assert.ok(nearby.places.length);checks.push('Nearby food: uses Cypress geography');
+const bowling=await call('/api/world/search',{query:'bowling near Irvine',limit:5});assert.ok(bowling.places.length);assert.ok(bowling.places.every(p=>p.provider==='google'));checks.push('Founder Irvine search: real candidates');
+const invalid=await fetch(base+'/api/world/details',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({placeId:'node/123'})});assert.equal(invalid.status,400);checks.push('Legacy/invalid ID: clear rejection');
+const now=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const date=new Date(now+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+1);
+const draft={timeZone:'America/Los_Angeles',startingLocation:'Cypress',startingPlace:cypress,date:date.toISOString().slice(0,10),availableStartTime:'16:00',requiredEndTime:'23:00',budgetPerPerson:'40',groupSize:'5',transportation:'driving',vibeInterests:'dinner and something fun',startingState:'nothing-planned',existingStops:[]};
+if(addressAlias){const {suggestion,place}=addressAlias;const refreshed=await call('/api/plans',{draft:{...draft,startingLocation:suggestion.display_name,startingPlace:{...place,provider_place_id:suggestion.provider_place_id,display_name:suggestion.display_name}}});assert.equal(refreshed.request.startingPlace.provider_place_id,place.provider_place_id);assert.equal(refreshed.request.budgetPerPerson.amountCents,4000);checks.push('Canonical address ID: refreshed during build without dropping user intent');}
+const unresolved=await fetch(base+'/api/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({draft:{...draft,startingPlace:null}})});assert.equal(unresolved.status,400);checks.push('Unselected text: rejected without fabricated geography');
+const run=await call('/api/plans',{draft});assert.equal(run.status,'complete');assert.equal(run.request.budgetPerPerson.amountCents,4000);assert.ok(run.result.primaryItinerary.stops.every(s=>s.travel.actualMode==='driving'));checks.push('Guest build: budget stays $40 each; real driving routes');
+const route=await call('/api/world/route',{origin:cypress,destination:run.result.primaryItinerary.stops[0].place,mode:'driving'});assert.equal(route.source,'google-routes');assert.ok(route.geometry?.coordinates.length>1);checks.push('Route line: genuine Google geometry');
+const config=await fetch(base+'/api/world/config').then(r=>r.json());assert.equal(config.provider,'google');assert.ok(config.browserKey);assert.equal(config.serverKey,undefined);checks.push('Configuration: browser key only; server key stays private');
+console.log(JSON.stringify({passed:checks.length,checks},null,2));

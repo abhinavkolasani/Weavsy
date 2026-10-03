@@ -1,4 +1,4 @@
-import type { Coordinates, PlaceDetails, PlaceReference, PlaceSearch, SearchResult, WorldProvider } from './types';
+import type { Coordinates, PlaceDetails, PlaceSuggestion, SearchResult, WorldProvider } from './types';
 async function request<T>(path: string, input: unknown, signal?: AbortSignal): Promise<T> {
   let response:Response;
   try {response=await fetch('/api/world/' + path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input),signal});}
@@ -9,10 +9,10 @@ async function request<T>(path: string, input: unknown, signal?: AbortSignal): P
   return result;
 }
 export const worldClient: WorldProvider = {
-  autocompleteLocation: (query,bias) => request<PlaceReference[]>('autocomplete',{query,bias}),
-  autocompletePlace: (query,bias) => request<PlaceReference[]>('autocomplete',{query,bias}),
+  autocompleteLocation: (query,bias,sessionToken) => request<PlaceSuggestion[]>('autocomplete',{query,bias,sessionToken}),
+  autocompletePlace: (query,bias,sessionToken) => request<PlaceSuggestion[]>('autocomplete',{query,bias,sessionToken}),
   searchPlaces: search => request<SearchResult>('search',search),
-  getPlaceDetails: placeId => request<PlaceDetails>('details',{placeId}),
+  getPlaceDetails: (placeId,sessionToken) => request<PlaceDetails>('details',{placeId,sessionToken}),
   getRouteEstimate: async () => {throw new Error('Route estimates are not available yet.');},
 };
-export const searchSuggestions = (query: string, bias: Coordinates | undefined, signal: AbortSignal) => request<PlaceReference[]>('autocomplete',{query,bias},signal);
+export const searchSuggestions = (query: string, bias: Coordinates | undefined, signal: AbortSignal,sessionToken?:string) => request<PlaceSuggestion[]>('autocomplete',{query,bias,sessionToken},signal);

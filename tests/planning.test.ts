@@ -10,11 +10,11 @@ const validDraft = (): PlanningDraft => ({ ...emptyDraft(), startingLocation: 'L
 
 test('all eight inputs are preserved as structured fields', () => {
  const result=validateRequest(validDraft()); assert(result.ok);
- assert.deepEqual(result.request,{startingLocation:'Los Angeles',date:'2026-10-02',availableStartTime:'16:00',requiredEndTime:'22:00',budgetPerPerson:{amountCents:7550,currency:'USD'},groupSize:2,transportation:'walking',vibeInterests:'Relaxed dinner and art',startingState:'nothing-planned',existingStops:[]});
+ assert.deepEqual(result.request,{timeZone:validDraft().timeZone,startingLocation:'Los Angeles',date:'2026-10-02',availableStartTime:'16:00',requiredEndTime:'22:00',endDayOffset:0,endDate:'2026-10-02',budgetPerPerson:{amountCents:7550,currency:'USD'},groupSize:2,transportation:'walking',vibeInterests:'Relaxed dinner and art',startingState:'nothing-planned',existingStops:[]});
 });
-test('required values, negative budget, fractional/zero group and same-day timing are rejected', () => {
+test('required values, negative budget, fractional/zero group and identical start/finish are rejected', () => {
  assert(!validateRequest(emptyDraft()).ok);
- for (const patch of [{groupSize:'0'},{groupSize:'-1'},{groupSize:'1.5'},{budgetPerPerson:'-5'},{budgetPerPerson:''},{budgetPerPerson:'1.234'},{requiredEndTime:'15:00'},{requiredEndTime:'16:00'},{date:'2026-02-30'},{startingLocation:' '},{vibeInterests:' '}]) assert(!validateRequest({...validDraft(),...patch}).ok,JSON.stringify(patch));
+ for (const patch of [{groupSize:'0'},{groupSize:'-1'},{groupSize:'1.5'},{budgetPerPerson:'-5'},{budgetPerPerson:''},{budgetPerPerson:'1.234'},{requiredEndTime:'16:00'},{date:'2026-02-30'},{startingLocation:' '},{vibeInterests:' '}]) assert(!validateRequest({...validDraft(),...patch}).ok,JSON.stringify(patch));
  assert(validateRequest({...validDraft(),budgetPerPerson:'0'}).ok);
 });
 test('each of the five starting states submits, with unknown duration allowed', () => {
@@ -35,11 +35,12 @@ test('switching modes keeps fixed pieces and does not silently drop them for Not
  const next=changeStartingState(d,'almost-complete');assert.deepEqual(next.draft.existingStops,d.existingStops);
  const blank=changeStartingState(next.draft,'nothing-planned');assert(blank.error);assert.deepEqual(blank.draft.existingStops,d.existingStops);
 });
-test('reservation requires a time; known fixed timing must fit the outing', () => {
+test('reservation requires a time; wrap-up is soft and planner resolves fixed conflicts', () => {
  const d=changeStartingState(validDraft(),'reservation').draft;d.existingStops[0].name='Dinner';assert(!validateRequest(d).ok);
- for(const startTime of ['15:00','22:00'])assert(!validateRequest({...d,existingStops:[{...d.existingStops[0],startTime}]}).ok);
- assert(!validateRequest({...d,existingStops:[{...d.existingStops[0],startTime:'19:00',timingDetail:'duration',durationMinutes:'240'}]}).ok);
- assert(!validateRequest({...d,existingStops:[{...d.existingStops[0],startTime:'19:00',timingDetail:'end-time',endTime:'18:00'}]}).ok);
+ for(const startTime of ['15:00','22:00'])assert(validateRequest({...d,existingStops:[{...d.existingStops[0],startTime}]}).ok);
+ assert(validateRequest({...d,existingStops:[{...d.existingStops[0],startTime:'19:00',timingDetail:'duration',durationMinutes:'240'}]}).ok);
+ assert(validateRequest({...d,existingStops:[{...d.existingStops[0],startTime:'19:00',timingDetail:'end-time',endTime:'01:00'}]}).ok);
+ assert(!validateRequest({...d,existingStops:[{...d.existingStops[0],startTime:'19:00',timingDetail:'end-time',endTime:'19:00'}]}).ok);
 });
 test('submitted snapshot stays separate from later draft edits', () => {
  const d=validDraft(),r=validateRequest(d);assert(r.ok);d.startingLocation='Changed draft';assert.equal(r.request.startingLocation,'Los Angeles');

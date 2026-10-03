@@ -1,0 +1,16 @@
+import { useEffect, useRef, useState } from 'react';
+import { validDate } from '../planning/validate';
+import { fieldAccessibility } from './Field';
+const format=(iso:string)=>validDate(iso)?`${iso.slice(5,7)}/${iso.slice(8,10)}/${iso.slice(0,4)}`:iso;
+export function DateInput({id,value,onChange,minimum,error}:{id:string;value:string;onChange:(v:string)=>void;minimum:string;error?:string}) {
+  const [text,setText]=useState(()=>format(value)),[open,setOpen]=useState(false),[month,setMonth]=useState(()=>new Date((validDate(value)?value:minimum).slice(0,7)+'-01T12:00:00'));
+  const root=useRef<HTMLDivElement>(null),toggle=useRef<HTMLButtonElement>(null);
+  useEffect(()=>setText(format(value)),[value]);
+  useEffect(()=>{if(!open)return;const close=(event:PointerEvent)=>{if(!root.current?.contains(event.target as Node))setOpen(false);};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close);},[open]);
+  function manual(next:string){setText(next);const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(next);onChange(m?`${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`:next);}
+  function choose(iso:string){onChange(iso);setText(format(iso));setOpen(false);toggle.current?.focus();}
+  const year=month.getFullYear(),m=month.getMonth(),offset=new Date(year,m,1).getDay(),days=new Date(year,m+1,0).getDate();
+  return <div className="date-control" ref={root} onKeyDown={e=>{if(e.key==='Escape'){setOpen(false);toggle.current?.focus();}}}><div className="date-entry"><input id={id} type="text" inputMode="numeric" placeholder="MM/DD/YYYY" value={text} onChange={e=>manual(e.target.value)} {...fieldAccessibility(id,error)}/><button ref={toggle} type="button" className="calendar-toggle" aria-label="Choose date from calendar" aria-expanded={open} onClick={()=>{setMonth(new Date((validDate(value)?value:minimum).slice(0,7)+'-01T12:00:00'));setOpen(v=>!v);}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button></div>
+    {open&&<div className="calendar-popup" role="dialog" aria-label="Choose outing date"><div className="calendar-heading"><button type="button" aria-label="Previous month" disabled={`${year}-${String(m+1).padStart(2,'0')}`<=minimum.slice(0,7)} onClick={()=>setMonth(new Date(year,m-1,1))}>‹</button><strong>{new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric'}).format(month)}</strong><button type="button" aria-label="Next month" onClick={()=>setMonth(new Date(year,m+1,1))}>›</button></div><div className="calendar-grid">{['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=><span className="weekday" key={d}>{d}</span>)}{Array.from({length:offset},(_,i)=><span key={'empty'+i}/>)}{Array.from({length:days},(_,i)=>{const iso=`${year}-${String(m+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;return <button key={iso} type="button" disabled={iso<minimum} aria-label={new Intl.DateTimeFormat('en-US',{dateStyle:'full'}).format(new Date(iso+'T12:00:00'))} aria-pressed={value===iso} className={`${value===iso?'chosen-day':''} ${minimum===iso?'current-day':''}`} onClick={()=>choose(iso)}>{i+1}</button>;})}</div><button type="button" className="text-button" onClick={()=>choose(minimum)}>Today</button></div>}
+  </div>;
+}

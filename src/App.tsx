@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlanningForm } from './components/PlanningForm';
 import { RequestSummary } from './components/RequestSummary';
+import { ItineraryResults } from './components/ItineraryResults';
+import { RunInspector } from './founder/RunInspector';
+import { isRealPlanResult } from './itinerary/realPlan';
 import { createFounderMetadata } from './founder/metadata';
 import { PlaceLab } from './founder/PlaceLab';
 import { initialState, restoreState, SESSION_KEY } from './planning/state';
 import type { PlannerState } from './planning/state';
 import type { PlanningRequest } from './planning/types';
+import { hydrateSession,serializeSession } from './world/durable';
+import { worldClient } from './world/client';
+import { PolicyPage } from './components/PolicyPage';
 function loadSession() { try {
     return restoreState(sessionStorage.getItem(SESSION_KEY));
 }
@@ -18,15 +24,17 @@ export function App() {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [storageUnavailable, setStorageUnavailable] = useState(false);
+    const [loaded,setLoaded]=useState(false);
     const headingRef = useRef<HTMLElement>(null);
     const previousScreen = useRef(state.screen);
-    useEffect(() => { try {
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+    useEffect(()=>{let cancelled=false;let raw:string|null=null;try{raw=sessionStorage.getItem(SESSION_KEY);}catch{setStorageUnavailable(true);}void hydrateSession(raw,id=>worldClient.getPlaceDetails(id)).then(restored=>{if(!cancelled){setState(restored.state);if(restored.warning)setError(restored.warning);setLoaded(true);}});return()=>{cancelled=true;};},[]);
+    useEffect(() => { if(!loaded)return;try {
+        sessionStorage.setItem(SESSION_KEY, serializeSession(state));
         setStorageUnavailable(false);
     }
     catch {
         setStorageUnavailable(true);
-    } }, [state]);
+    } }, [state,loaded]);
     useEffect(() => { if (previousScreen.current !== state.screen) {
         headingRef.current?.focus();
         window.scrollTo(0, 0);
@@ -42,9 +50,10 @@ export function App() {
             const result = await response.json();
             if (!response.ok)
                 throw new Error((result.error || 'Could not save your outing'));
+            if (!isRealPlanResult(result.result)) throw new Error('The plan response was incomplete. Your outing details are still here.');
             setRun(result);
             try { sessionStorage.setItem('outing-last-run', result.runId); } catch { setStorageUnavailable(true); }
-            setState(current => ({ ...current, screen: 'results', submission: { request:result.request ?? request, result: { status: 'not-generated', primaryItinerary: null }, metadata: createFounderMetadata() } }));
+            setState(current => ({ ...current, screen: 'results', submission: { request:result.request ?? request, result:result.result, metadata: {...createFounderMetadata(),batch:3,plannerStatus:'built',requestId:result.runId} } }));
         }
         catch (e) {
             setError(e instanceof Error ? e.message : 'Could not build the plan. Your draft is saved.');
@@ -59,8 +68,7 @@ export function App() {
     return <div className="app"><header className="app-header"><strong>Outing planner</strong><span className="version">Plan your time together</span></header><main ref={headingRef} tabIndex={-1}>
     {storageUnavailable && <p className="storage-notice" role="status">This browser can’t save the current tab’s draft. You can still plan, but refreshing will clear your input.</p>}
     {error && <p role="alert" className="storage-notice">{error}</p>}
-    {busy && <p role="status">Saving your outing…</p>}
-    {window.location.pathname.startsWith('/founder') ? <PlaceLab initialOrigin={state.draft.startingPlace}/> : state.screen === 'results' && state.submission ? <RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/> : <PlanningForm draft={state.draft} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
-    <footer className="app-footer"><span>No account needed.</span><span>Draft kept in this browser tab only.</span></footer>
-  </main></div>;
+    {busy && <p role="status" className="planning-progress">Finding real places and fitting travel around your choices… This usually takes less than 30 seconds.</p>}
+    {['/terms','/privacy'].includes(window.location.pathname)?<PolicyPage privacy={window.location.pathname==='/privacy'}/>:!loaded?<p role="status" className="hint">Loading your outing…</p>:window.location.pathname.startsWith('/founder/runs') ? <RunInspector/> : window.location.pathname.startsWith('/founder') ? <PlaceLab initialOrigin={state.draft.startingPlace}/> : state.screen === 'results' && state.submission ? (state.submission.result.status==='not-generated'?<RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/>:<ItineraryResults submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/>) : <PlanningForm draft={state.draft} busy={busy} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
+  </main><footer className="policy-links"><a href="/terms" target="_blank" rel="noreferrer">Terms</a><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a></footer></div>;
 }

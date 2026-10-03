@@ -16,16 +16,21 @@ export interface ExistingStopDraft {
   name: string;
   fixed: boolean;
   startTime: string;
+  startDayOffset?: 0 | 1;
   timingDetail: TimingDetail;
   endTime: string;
+  endDayOffset?: 0 | 1;
   durationMinutes: string;
   note: string;
   place?: PlaceReference | null;
+  pendingPlaceId?: string;
   entryKind?: 'place' | 'activity';
 }
 export interface PlanningDraft {
+  timeZone?: string;
   startingLocation: string;
   startingPlace?: PlaceReference | null;
+  pendingStartingPlaceId?: string;
   date: string;
   availableStartTime: string;
   requiredEndTime: string;
@@ -42,7 +47,9 @@ export interface ExistingStop {
   name: string;
   fixed: boolean;
   startTime: string | null;
+  startDayOffset?: 0 | 1;
   endTime: string | null;
+  endDayOffset?: 0 | 1;
   durationMinutes: number | null;
   note: string | null;
   place?: PlaceReference | null;
@@ -56,11 +63,14 @@ export interface ExistingStop {
   };
 }
 export interface PlanningRequest {
+  timeZone?: string;
   startingLocation: string;
   startingPlace?: PlaceReference | null;
   date: string;
   availableStartTime: string;
   requiredEndTime: string;
+  endDayOffset?: 0 | 1;
+  endDate?: string;
   budgetPerPerson: { amountCents: number; currency: 'USD' };
   groupSize: number;
   transportation: Transportation;

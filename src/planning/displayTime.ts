@@ -8,8 +8,13 @@ export function toInternalTime(hour: string, minute: string, period: string) {
   if (!hour) return '';
   return `${String(Number(hour) % 12 + (period === 'PM' ? 12 : 0)).padStart(2, '0')}:${minute}`;
 }
-export function displayTime(value: string) {
+export function displayTime(value: string, dayOffset = 0) {
   if (!value) return 'Not specified';
   const p = timeParts(value);
-  return `${p.hour}:${p.minute} ${p.period}`;
+  return `${p.hour}:${p.minute} ${p.period}${dayOffset === 1 ? ' (next day)' : ''}`;
+}
+/** Typed clock text with an explicit period; never guess what “7” means without AM/PM. */
+export function parseTypedTime(text: string, period: string): string | null {
+  const match = /^\s*(0?[1-9]|1[0-2])(?::([0-5]\d))?\s*$/i.exec(text);
+  return match && ['AM','PM'].includes(period) ? toInternalTime(String(Number(match[1])), match[2] ?? '00', period) : null;
 }

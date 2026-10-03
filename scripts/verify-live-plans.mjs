@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { durableDraft } from '../src/world/durable.ts';
+import { writeFileSync, mkdirSync } from 'node:fs';
+const base='http://127.0.0.1:5174';
+const records=[];
+async function api(path,body){const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(32_000)});const data=await response.json();if(!response.ok)throw new Error(data.error);return data;}
+const locations=await api('/api/world/autocomplete',{query:'Los Angeles'});
+const selected=locations.find(p=>p.display_name==='Los Angeles');
+const origin=selected?(await api('/api/world/details',{placeId:selected.provider_place_id})).place:null;
+if(!origin)throw new Error('Real LA origin not returned');
+const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const testDate=new Date(today+'T12:00:00Z');testDate.setUTCDate(testDate.getUTCDate()+1);
+const draft={timeZone:'America/Los_Angeles',startingLocation:origin.display_name,startingPlace:origin,date:testDate.toISOString().slice(0,10),availableStartTime:'16:00',requiredEndTime:'22:00',budgetPerPerson:'40',groupSize:'2',transportation:'driving',vibeInterests:'dinner and something fun',startingState:'nothing-planned',existingStops:[]};
+async function build(name,patch={}){const at=Date.now();const run=await api('/api/plans',{draft:{...draft,...patch}});const plan=run.result?.primaryItinerary;const elapsedMs=Date.now()-at;const row={name,elapsedMs,runId:run.runId,status:run.status,request:durableDraft(run.request),itinerary:plan?{costPerPersonCents:plan.costPerPersonCents,finish:plan.finish,stops:plan.stops.map(s=>({placeId:s.id,userStopId:s.userStopId,arrival:s.arrival,departure:s.departure,fixed:s.fixed,cost:s.cost,duration:s.duration}))}:null};records.push(row);writeFileSync('artifacts/batch3/live-results.json',JSON.stringify(records,null,2));console.log(JSON.stringify({name,elapsedMs,runId:run.runId,status:run.status,cost:plan?.costPerPersonCents,travel:plan?.travelMinutes,finish:plan?.finish,stops:plan?.stops.map(s=>({id:s.id,time:s.arrival,fixed:s.fixed,role:s.role,travel:s.travel.minutes}))}));return run;}
+function entry(place,fixed=true,startTime=''){return {id:crypto.randomUUID(),name:place.display_name,place,entryKind:'place',fixed,startTime,timingDetail:'unknown',endTime:'',durationMinutes:'',note:'Keep this choice'};}
+mkdirSync('artifacts/batch3',{recursive:true});
+const basic=await build('nothing-planned');
+const realStops=basic.result?.primaryItinerary?.stops;
+if(!realStops)throw new Error('Initial live plan failed; fix before proceeding');
+const meal=realStops.find(s=>s.role==='meal')?.place;
+const anchor=realStops.find(s=>s.role==='main-activity')?.place;
+if(!meal||!anchor)throw new Error('Initial plan lacks meal/activity');
+await build('anchor',{startingState:'anchor',existingStops:[entry(anchor)]});
+await build('reservation',{startingState:'reservation',existingStops:[entry(meal,true,'19:00')]});
+await build('partial-plan',{startingState:'partial-plan',existingStops:[entry(meal,true,'19:00'),entry(anchor,false)]});
+await build('low-budget',{budgetPerPerson:'20'});
+await build('high-budget',{budgetPerPerson:'80'});
+await build('chill',{vibeInterests:'chill'});
+await build('active',{vibeInterests:'something active'});
+await build('impossible-fixed',{startingState:'partial-plan',existingStops:[entry(meal,true,'19:00'),entry(anchor,true,'19:15')]});
+const tomorrow=new Date(today+'T12:00:00Z');tomorrow.setUTCDate(tomorrow.getUTCDate()+1);
+await build('five-people-budget-time',{date:tomorrow.toISOString().slice(0,10),budgetPerPerson:'40',groupSize:'5',availableStartTime:'16:00',requiredEndTime:'23:00',vibeInterests:'dinner and something fun'});
+const third=(await api('/api/world/search',{query:'coffee',location:origin,types:['cafe'],limit:3})).places.find(p=>p.provider_place_id!==meal.provider_place_id&&p.provider_place_id!==anchor.provider_place_id);
+if(third)await build('almost-complete',{startingState:'almost-complete',existingStops:[entry(meal,true,'19:00'),entry(anchor,false),entry(third,false)]});
+assert.ok(records.filter(r=>r.name!=='impossible-fixed').every(r=>r.status==='complete'),'A live planning scenario failed');
+assert.ok(records.every(r=>r.elapsedMs<30_000),'A build exceeded 30 seconds');
+assert.equal(records.find(r=>r.name==='impossible-fixed').status,'no-plan');
+for(const r of records.filter(r=>['reservation','partial-plan','almost-complete'].includes(r.name)))assert.ok(r.itinerary.stops.some(s=>s.fixed&&s.arrival==='19:00'&&s.placeId===meal.provider_place_id),'Fixed dinner moved');
+assert.equal(records.find(r=>r.name==='five-people-budget-time').request.budgetPerPerson.amountCents,4000);
+assert.notDeepEqual(records.find(r=>r.name==='chill').itinerary.stops.map(s=>s.placeId).sort(),records.find(r=>r.name==='active').itinerary.stops.map(s=>s.placeId).sort(),'Chill and active LA outings should select different activities');
+console.log('Live benchmarks passed. IDs and product estimates saved; provider content is not archived.');

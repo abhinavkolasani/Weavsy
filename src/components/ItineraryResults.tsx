@@ -1,0 +1,25 @@
+import type { Submission } from '../planning/state';
+import type { RealPlanResult } from '../itinerary/realPlan';
+import { displayTime } from '../planning/displayTime';
+import { outingWindow, stopTiming } from '../planning/timeline';
+import { placeUrl } from '../world/reference';
+import { SourceAttribution } from './SourceAttribution';
+import { PlaceMap } from './PlaceMap';
+const money=(cents:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:cents%100?2:0}).format(cents/100);
+export function ItineraryResults({submission,onEdit}:{submission:Submission;onEdit:()=>void}) {
+  const {request}=submission;const result=submission.result as RealPlanResult;
+  const plan=result.primaryItinerary;
+  if(!plan)return <><div className="page-heading"><p className="eyebrow">YOUR OUTING</p><h1>{result.status==='clarification'?'One detail to work around.':'Let’s adjust one piece.'}</h1><p role="status">{result.message}</p></div><section className="panel"><h2>Your choices are still here</h2><p>{request.startingLocation} · {displayTime(request.availableStartTime)} – {displayTime(request.requiredEndTime,request.endDayOffset??outingWindow(request).endDayOffset)}</p><p>{money(request.budgetPerPerson.amountCents)} per person target · {request.groupSize} people</p>{request.existingStops.map(s=><p key={s.id}><strong>{s.name}</strong> · {s.fixed?'Fixed':'Flexible'}{s.startTime?` · ${displayTime(s.startTime,stopTiming(request,s).startDayOffset??0)}`:''}</p>)}<button className="primary" onClick={onEdit}>Edit outing details</button></section></>;
+  return <><div className="page-heading"><p className="eyebrow">YOUR OUTING</p><h1>Here’s what I’d do.</h1><p>{request.startingLocation} · {new Intl.DateTimeFormat('en-US',{dateStyle:'medium'}).format(new Date(request.date+'T12:00:00'))} · {request.groupSize} {request.groupSize===1?'person':'people'}</p></div>
+    <section className="panel outing-overview" aria-label="Outing totals"><div className="section-heading"><h2>One good outing</h2><button className="text-button" onClick={onEdit}>Edit details</button></div><div className="outing-totals"><div><span>Estimated per person</span><strong>About {money(plan.costPerPersonCents)}</strong><small>{money(plan.costRangeCents.low)}–{money(plan.costRangeCents.high)} allowance range</small></div><div><span>Start → wrap up</span><strong>{displayTime(plan.start)} → {displayTime(plan.finish,plan.finishDayOffset)}</strong><small>Flexible stops are approximate</small></div><div><span>Travel between places</span><strong>About {plan.travelMinutes} min</strong><small>Plus transitions shown below</small></div></div><p className="hint">Your budget target: {money(request.budgetPerPerson.amountCents)} per person.</p></section>
+    <ol className="itinerary-stops">{plan.stops.map((stop,index)=><li key={stop.id} className="panel itinerary-stop">
+      <div className="journey-label"><span aria-hidden="true">{index+1}</span><p>From {index===0?'your starting point':'the previous stop'}: {stop.travel.minutes===0?'same location':`about ${stop.travel.minutes} min ${stop.travel.actualMode==='driving'?'driving':'walking'}`}{stop.transitionMinutes>0?` + ${stop.transitionMinutes} min to settle in`:''}</p></div>
+      <div className="received-stop-heading"><p className="stop-time">{stop.exactTime?'':'Around '}{displayTime(stop.arrival,stop.arrivalDayOffset)}</p><span className={`status-badge ${stop.fixed?'fixed-badge':''}`}>{stop.exactTime?'Fixed time':stop.exactEnd?'Fixed finish':stop.fixed?'Fixed place':'Flexible'}</span></div>
+      <h2>{stop.place.display_name}</h2><SourceAttribution places={[stop.place]}/><p className="stop-role">{stop.category} · {stop.role.replaceAll('-',' ')}</p><p className="address-line">{stop.place.formatted_address??'Address not supplied by the map source'} · <a href={placeUrl(stop.place)} target="_blank" rel="noreferrer">View place</a></p>
+      <div className="stop-facts"><span>{stop.duration.source==='user'?`${stop.duration.value} min you chose`:`About ${stop.duration.low}–${stop.duration.high} min`}</span><span>About {money(stop.cost.value)}/person</span><span>{stop.exactEnd?'Until':'Leave around'} {displayTime(stop.departure,stop.departureDayOffset)}</span></div>
+      <p>{stop.reason}</p>{stop.note&&<p className="user-note">Your note: {stop.note}</p>}{stop.waitMinutes>=20&&<p className="hint">About {stop.waitMinutes} minutes of breathing room before this stop.</p>}{stop.warnings.map(w=><p className="hint" key={w}>{w}</p>)}
+    </li>)}</ol>
+    {request.startingPlace&&<section className="panel"><h2>Your route</h2><PlaceMap places={[request.startingPlace,...plan.stops.map(s=>s.place)]} routes={plan.stops.flatMap(s=>s.travel.geometry?[s.travel.geometry]:[])} itinerary mode={request.transportation}/><SourceAttribution places={[request.startingPlace,...plan.stops.map(s=>s.place)]}/></section>}
+    <section className="panel outing-notes"><h2>Before you head out</h2><ul>{plan.warnings.map(w=><li key={w}>{w}</li>)}</ul></section><button className="secondary" onClick={onEdit}>← Edit your outing</button>
+  </>;
+}

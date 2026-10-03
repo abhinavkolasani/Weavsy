@@ -9,9 +9,9 @@ type JsonRecord = Record<string, any>;
 const LA = {latitude:34.0522,longitude:-118.2437};
 const typeCodes: Record<string,OsmType> = {N:'node',W:'way',R:'relation'};
 const categories: Record<PlaceSearchType,string[]> = {
-  food:['osm.amenity.restaurant','osm.amenity.fast_food'], cafe:['osm.amenity.cafe'],
+  food:['osm.amenity.restaurant','osm.amenity.fast_food'], 'casual-food':['osm.amenity.fast_food'], cafe:['osm.amenity.cafe'],
   dessert:['osm.amenity.ice_cream','osm.shop.bakery','osm.amenity.cafe'],
-  bowling:['osm.leisure.bowling_alley'], activity:['osm.leisure.sports_centre','osm.leisure.fitness_centre','osm.tourism.museum'],
+  bowling:['osm.leisure.bowling_alley'], cinema:['osm.amenity.cinema'], activity:['osm.leisure.sports_centre','osm.leisure.fitness_centre','osm.tourism.museum'],
   shopping:['osm.shop.mall'],park:['osm.leisure.park'],
 };
 const text = (v: unknown): string | null => typeof v === 'string' && !!v.trim() ? v.trim() : null;
@@ -30,6 +30,7 @@ export function normalizePhoton(feature: JsonRecord, fetchedAt: string): PlaceRe
 export function inferSearchType(query: string): PlaceSearchType | undefined {
   const category=query.trim().replace(/^(?:casual|sit-down|cheap|nearby)\s+/i,'');
   if (/^bowling(?: alley)?s?$/i.test(category)) return 'bowling';
+  if (/^(?:cinemas?|movies?|flicks)$/i.test(category)) return 'cinema';
   if (/^(?:desserts?|ice cream|baker(?:y|ies))$/i.test(category)) return 'dessert';
   if (/^(?:caf[eé]s?|coffee)$/i.test(category)) return 'cafe';
   if (/^(?:food|dinner|lunch|restaurants?)$/i.test(category)) return 'food';
@@ -42,7 +43,7 @@ export function distanceMetres(a:Coordinates,b:Coordinates) { const r=Math.PI/18
 export function createWorldProvider(options: {photonUrl?:string;overpassUrl?:string;fetcher?:typeof fetch;now?:()=>number;intervalMs?:number} = {}): WorldProvider & {resolveReferences(ids:string[],hints?:PlaceReference[]):Promise<Map<string,PlaceReference>>} {
   const fetcher=options.fetcher ?? fetch, now=options.now ?? Date.now;
   const photon=options.photonUrl ?? process.env.PHOTON_URL ?? 'https://photon.komoot.io';
-  const overpass=options.overpassUrl ?? process.env.OVERPASS_URL ?? 'https://overpass-api.de/api/interpreter';
+  const overpass=options.overpassUrl ?? process.env.OVERPASS_URL ?? 'https://maps.mail.ru/osm/tools/overpass/api/interpreter';
   const cache=new Map<string,{expires:number;value:any}>(), references=new Map<string,PlaceReference>();
   const inflight=new Map<string,Promise<any>>();
   let nextPhoton=0, nextOverpass=0, pending=0, blockedUntil=0, dailyDetails=0, day=Math.floor(now()/86400000);
@@ -62,7 +63,7 @@ export function createWorldProvider(options: {photonUrl?:string;overpassUrl?:str
         if(kind==='photon')nextPhoton=Math.max(now(),nextPhoton)+(options.intervalMs ?? 1000);else nextOverpass=Math.max(now(),nextOverpass)+(options.intervalMs ?? 3000);
         if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
         let response:Response;
-        try {response=await fetcher(url,{signal:AbortSignal.timeout(kind==='photon'?12000:10000),headers:{'User-Agent':'OutingPlannerPrototype/0.1 (local founder prototype)','Accept':'application/json'}});}catch{throw new WorldError('Couldn’t reach place search. Your outing details are safe. Please try again.');}
+        try {response=await fetcher(url,{signal:AbortSignal.timeout(kind==='photon'?7000:14000),headers:{'User-Agent':'OutingPlannerPrototype/0.1 (local founder prototype)','Accept':'application/json'}});}catch{throw new WorldError('Couldn’t reach place search. Your outing details are safe. Please try again.');}
         if(response.status===429||response.status===406){blockedUntil=now()+60000;throw new WorldError('Place search is busy. Please try again in a minute.',429);}
         if(!response.ok)throw new WorldError('Place information is unavailable right now. Please try again.');
         let result:any;try{result=await response.json();}catch{throw new WorldError('Place search returned an unreadable response. Please try again.');}
@@ -79,7 +80,7 @@ export function createWorldProvider(options: {photonUrl?:string;overpassUrl?:str
     const known=recentReference(placeId);
     try {
       const url=new URL(overpass);url.searchParams.set('data',`[out:json][timeout:8];${parsed.type}(${parsed.id});out center tags;`);
-      const data=await json(url.href,'overpass');if(!Array.isArray(data.elements))throw new WorldError('Place details are incomplete. Please try again.');
+      const data=await json(url.href,'overpass');if(data.remark||!Array.isArray(data.elements))throw new WorldError('Place details are incomplete. Please try again.');
       const element=data.elements.find((e:any)=>e.type===parsed.type&&String(e.id)===parsed.id);
       if(!element) {references.delete(placeId);throw new WorldError('This place is no longer available. Search for it again.',404);}
       const tags=element.tags??{};
@@ -135,6 +136,18 @@ export function createWorldProvider(options: {photonUrl?:string;overpassUrl?:str
     return {places,context:context??null,warnings:[]};
   }
   return {autocompleteLocation:autocomplete,autocompletePlace:autocomplete,searchPlaces,getPlaceDetails,
+    async getPlaceDetailsMany(ids:string[]) {
+      const unique=[...new Set(ids)];if(unique.length>24||unique.some(id=>!parsePlaceId(id)))throw new WorldError('Choose valid place identifiers.',400);
+      const missing=unique.filter(id=>{const parsed=parsePlaceId(id)!;const url=new URL(overpass);url.searchParams.set('data',`[out:json][timeout:8];${parsed.type}(${parsed.id});out center tags;`);const saved=cache.get(url.href);return !saved||saved.expires<=now();});
+      if(missing.length) {
+        const url=new URL(overpass);url.searchParams.set('data',`[out:json][timeout:8];(${missing.map(id=>{const p=parsePlaceId(id)!;return `${p.type}(${p.id});`;}).join('')});out center tags;`);
+        const data=await json(url.href,'overpass');if(data.remark||!Array.isArray(data.elements))throw new WorldError('Place details are incomplete. Please try again.');
+        for(const id of missing){const p=parsePlaceId(id)!;const single=new URL(overpass);single.searchParams.set('data',`[out:json][timeout:8];${p.type}(${p.id});out center tags;`);if(cache.size>=150)cache.delete(cache.keys().next().value!);cache.set(single.href,{expires:now()+15*60*1000,value:{elements:data.elements.filter((e:any)=>e.type===p.type&&String(e.id)===p.id)}});}
+      }
+      const result=new Map<string,{ok:true;details:PlaceDetails}|{ok:false;status:number;message:string}>();
+      for(const id of unique){try{result.set(id,{ok:true,details:await getPlaceDetails(id)});}catch(error){result.set(id,{ok:false,status:error instanceof WorldError?error.status:503,message:error instanceof Error?error.message:'Place details unavailable'});}}
+      return result;
+    },
     getRouteEstimate:async()=>{throw new WorldError('Route estimates are not available yet.',501);},
     async resolveReferences(ids:string[],hints:PlaceReference[]=[]) {
       const result=new Map<string,PlaceReference>();

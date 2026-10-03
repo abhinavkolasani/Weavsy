@@ -1,0 +1,971 @@
+[
+  {
+    "name": "nothing-planned",
+    "elapsedMs": 513,
+    "runId": "2044c58e-22df-49e4-953d-4f1b5b5260a0",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "18:35",
+      "stops": [
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:00",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        },
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": null,
+          "arrival": "17:15",
+          "departure": "18:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "anchor",
+    "elapsedMs": 562,
+    "runId": "3b739eb5-7eb1-47ec-86b6-1cec6500c1ca",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "anchor",
+      "existingStops": [
+        {
+          "id": "a4bf03f4-9e48-464f-902e-7e126688c216",
+          "name": "",
+          "fixed": true,
+          "startTime": null,
+          "endTime": null,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": false,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJLSn0pjnGwoARyVDVHPcXZf8"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "18:35",
+      "stops": [
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:00",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        },
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": "a4bf03f4-9e48-464f-902e-7e126688c216",
+          "arrival": "17:15",
+          "departure": "18:35",
+          "fixed": true,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reservation",
+    "elapsedMs": 477,
+    "runId": "d1714ad4-f2b0-4474-8133-0a3e2b56b85b",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "reservation",
+      "existingStops": [
+        {
+          "id": "bb29841e-8c74-41ce-9188-fc7c91ca2a3d",
+          "name": "",
+          "fixed": true,
+          "startTime": "19:00",
+          "endTime": null,
+          "startDayOffset": 0,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJIQlkB5zHwoARwIhkrivvITQ"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "19:45",
+      "stops": [
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        },
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": "bb29841e-8c74-41ce-9188-fc7c91ca2a3d",
+          "arrival": "19:00",
+          "departure": "19:45",
+          "fixed": true,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "partial-plan",
+    "elapsedMs": 398,
+    "runId": "b810e0f5-13f7-4528-b129-4fc1cacb7f02",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "partial-plan",
+      "existingStops": [
+        {
+          "id": "fd1ad720-1156-4604-ab5c-3e65525f9d4a",
+          "name": "",
+          "fixed": true,
+          "startTime": "19:00",
+          "endTime": null,
+          "startDayOffset": 0,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJIQlkB5zHwoARwIhkrivvITQ"
+        },
+        {
+          "id": "003fe289-e13c-463f-92f9-97d21042a326",
+          "name": "",
+          "fixed": false,
+          "startTime": null,
+          "endTime": null,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": false,
+            "preserveStartTime": false,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJLSn0pjnGwoARyVDVHPcXZf8"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "19:45",
+      "stops": [
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": "003fe289-e13c-463f-92f9-97d21042a326",
+          "arrival": "16:15",
+          "departure": "17:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        },
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": "fd1ad720-1156-4604-ab5c-3e65525f9d4a",
+          "arrival": "19:00",
+          "departure": "19:45",
+          "fixed": true,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "low-budget",
+    "elapsedMs": 647,
+    "runId": "cb65bb46-cdfa-45f1-b72d-de6a76cfd8a5",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 2000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 1500,
+      "finish": "18:05",
+      "stops": [
+        {
+          "placeId": "ChIJwctUG0_GwoAROZBOlLcg5AU",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:05",
+          "fixed": false,
+          "cost": {
+            "value": 0,
+            "low": 0,
+            "high": 1000,
+            "source": "category-estimate",
+            "note": "No planned purchase; entry or parking fees may apply."
+          },
+          "duration": {
+            "value": 50,
+            "low": 35,
+            "high": 75,
+            "source": "category-estimate",
+            "note": "Easy walk and time to look around."
+          }
+        },
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "17:20",
+          "departure": "18:05",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "high-budget",
+    "elapsedMs": 246,
+    "runId": "067433fc-aadd-4cca-abc9-89035aa202d6",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 8000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 5300,
+      "finish": "19:05",
+      "stops": [
+        {
+          "placeId": "ChIJA9DQKQDHwoARqAQsC3kmV2o",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:30",
+          "fixed": false,
+          "cost": {
+            "value": 2800,
+            "low": 2000,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Restaurant meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 75,
+            "low": 60,
+            "high": 90,
+            "source": "category-estimate",
+            "note": "Typical sit-down meal."
+          }
+        },
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": null,
+          "arrival": "17:45",
+          "departure": "19:05",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "chill",
+    "elapsedMs": 280,
+    "runId": "7771bd20-4813-4140-bfaa-85ca9f3e1a67",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "chill",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 1500,
+      "finish": "18:05",
+      "stops": [
+        {
+          "placeId": "ChIJwctUG0_GwoAROZBOlLcg5AU",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:05",
+          "fixed": false,
+          "cost": {
+            "value": 0,
+            "low": 0,
+            "high": 1000,
+            "source": "category-estimate",
+            "note": "No planned purchase; entry or parking fees may apply."
+          },
+          "duration": {
+            "value": 50,
+            "low": 35,
+            "high": 75,
+            "source": "category-estimate",
+            "note": "Easy walk and time to look around."
+          }
+        },
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "17:20",
+          "departure": "18:05",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "active",
+    "elapsedMs": 516,
+    "runId": "5761e8ec-872f-4fd3-857d-ee3e12d2d282",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "something active",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "18:35",
+      "stops": [
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:00",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        },
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": null,
+          "arrival": "17:15",
+          "departure": "18:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "impossible-fixed",
+    "elapsedMs": 77,
+    "runId": "0036398c-b0c8-483c-bc80-2b3b793dd87a",
+    "status": "no-plan",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "partial-plan",
+      "existingStops": [
+        {
+          "id": "7a28e8cc-b605-484e-b824-a3097a2fe242",
+          "name": "",
+          "fixed": true,
+          "startTime": "19:00",
+          "endTime": null,
+          "startDayOffset": 0,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJIQlkB5zHwoARwIhkrivvITQ"
+        },
+        {
+          "id": "6f136966-db38-4a2b-8254-635507f3ca2e",
+          "name": "",
+          "fixed": true,
+          "startTime": "19:15",
+          "endTime": null,
+          "startDayOffset": 0,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJLSn0pjnGwoARyVDVHPcXZf8"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": null
+  },
+  {
+    "name": "five-people-budget-time",
+    "elapsedMs": 200,
+    "runId": "cb2f4652-0e60-449f-a32f-491e8d3e8b17",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "23:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 5,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "nothing-planned",
+      "existingStops": [],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4000,
+      "finish": "18:35",
+      "stops": [
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": null,
+          "arrival": "16:15",
+          "departure": "17:00",
+          "fixed": false,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        },
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": null,
+          "arrival": "17:15",
+          "departure": "18:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "almost-complete",
+    "elapsedMs": 317,
+    "runId": "fc2af80f-e8b4-4f97-b934-17cf5ea01b45",
+    "status": "complete",
+    "request": {
+      "timeZone": "America/Los_Angeles",
+      "startingLocation": "",
+      "date": "2026-10-03",
+      "startingPlace": null,
+      "availableStartTime": "16:00",
+      "requiredEndTime": "22:00",
+      "endDayOffset": 0,
+      "endDate": "2026-10-03",
+      "budgetPerPerson": {
+        "amountCents": 4000,
+        "currency": "USD"
+      },
+      "groupSize": 2,
+      "transportation": "driving",
+      "vibeInterests": "dinner and something fun",
+      "startingState": "almost-complete",
+      "existingStops": [
+        {
+          "id": "419ad78a-f9b1-49e7-b10f-587d30a8bd03",
+          "name": "",
+          "fixed": true,
+          "startTime": "19:00",
+          "endTime": null,
+          "startDayOffset": 0,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": true,
+            "preserveStartTime": true,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJIQlkB5zHwoARwIhkrivvITQ"
+        },
+        {
+          "id": "3bf8fe50-e8d3-4f77-a64c-2aa9c9846f51",
+          "name": "",
+          "fixed": false,
+          "startTime": null,
+          "endTime": null,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": false,
+            "preserveStartTime": false,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJLSn0pjnGwoARyVDVHPcXZf8"
+        },
+        {
+          "id": "34a2c91b-9fda-4c7e-80a4-7bdb684d256e",
+          "name": "",
+          "fixed": false,
+          "startTime": null,
+          "endTime": null,
+          "durationMinutes": null,
+          "note": "Keep this choice",
+          "place": null,
+          "source": "user",
+          "entryKind": "place",
+          "constraints": {
+            "preservePlace": false,
+            "preserveStartTime": false,
+            "preserveEndTime": false,
+            "preserveDuration": false
+          },
+          "pendingPlaceId": "ChIJ7ZSa2-fFwoARzjv_06FlBdU"
+        }
+      ],
+      "pendingStartingPlaceId": "ChIJE9on3F3HwoAR9AhGJW_fL-I"
+    },
+    "itinerary": {
+      "costPerPersonCents": 4800,
+      "finish": "19:45",
+      "stops": [
+        {
+          "placeId": "ChIJLSn0pjnGwoARyVDVHPcXZf8",
+          "userStopId": "3bf8fe50-e8d3-4f77-a64c-2aa9c9846f51",
+          "arrival": "16:15",
+          "departure": "17:35",
+          "fixed": false,
+          "cost": {
+            "value": 2500,
+            "low": 1800,
+            "high": 4000,
+            "source": "category-estimate",
+            "note": "Bowling allowance including possible rental; rates are not verified."
+          },
+          "duration": {
+            "value": 80,
+            "low": 60,
+            "high": 100,
+            "source": "category-estimate",
+            "note": "Typical bowling visit."
+          }
+        },
+        {
+          "placeId": "ChIJ7ZSa2-fFwoARzjv_06FlBdU",
+          "userStopId": "34a2c91b-9fda-4c7e-80a4-7bdb684d256e",
+          "arrival": "17:50",
+          "departure": "18:25",
+          "fixed": false,
+          "cost": {
+            "value": 800,
+            "low": 400,
+            "high": 1400,
+            "source": "category-estimate",
+            "note": "Drink and snack allowance; prices are not verified."
+          },
+          "duration": {
+            "value": 35,
+            "low": 25,
+            "high": 50,
+            "source": "category-estimate",
+            "note": "Typical coffee stop."
+          }
+        },
+        {
+          "placeId": "ChIJIQlkB5zHwoARwIhkrivvITQ",
+          "userStopId": "419ad78a-f9b1-49e7-b10f-587d30a8bd03",
+          "arrival": "19:00",
+          "departure": "19:45",
+          "fixed": true,
+          "cost": {
+            "value": 1500,
+            "low": 1000,
+            "high": 2200,
+            "source": "category-estimate",
+            "note": "Casual meal allowance; menu prices are not verified."
+          },
+          "duration": {
+            "value": 45,
+            "low": 30,
+            "high": 60,
+            "source": "category-estimate",
+            "note": "Typical casual meal."
+          }
+        }
+      ]
+    }
+  }
+]
