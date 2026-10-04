@@ -64,7 +64,7 @@ test('missing real candidate service returns no plan, never fabricated fallback'
  const routing={getMatrix:async()=>matrix(1),getRouteEstimate:async()=>null};const run=await createRealPlanner(world,routing).build(request());assert.equal(run.result.status,'no-plan');assert.equal(run.result.primaryItinerary,null);assert.equal(run.diagnostics.conflicts[0],'Source unavailable');
 });
 test('venue-free activity asks one geographic clarification instead of inventing a venue',async()=>{
- const r=request({existingStops:[{...existing(),place:null,entryKind:'activity',name:'Walk with my dog'}]});const run=await createRealPlanner({} as WorldProvider,{} as any).build(r);assert.equal(run.result.status,'clarification');assert.match(run.result.message??'',/Where/);
+ const r=request({existingStops:[{...existing(),place:null,entryKind:'activity',name:'Walk with my dog'}]});const run=await createRealPlanner({} as WorldProvider,{} as any).build(r);assert.equal(run.result.status,'clarification');assert.match(run.result.message??'',/exact-time activity/);
 });
 test('real results survive refresh, broken results safely fall back to the form',async()=>{
  const world={searchPlaces:async()=>({places:[food,bowling],context:origin,warnings:[]}),getPlaceDetails:async(id:string)=>({place:[food,bowling].find(p=>p.provider_place_id===id)!,opening_hours:null,business_status:'listed',website:null,warnings:[],estimated_cost_per_person:null,typical_duration_minutes:null})} as WorldProvider;

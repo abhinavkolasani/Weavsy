@@ -6,7 +6,7 @@ import { placeUrl } from '../world/reference';
 import { SourceAttribution } from './SourceAttribution';
 export function GooglePlaceMap({places,routes=[],itinerary=false,mode='driving'}:PlaceMapProps) {
   const container=useRef<HTMLDivElement>(null);
-  const [visible,setVisible]=useState(false),[error,setError]=useState(''),[ready,setReady]=useState(false);
+  const [visible,setVisible]=useState(itinerary),[error,setError]=useState(''),[ready,setReady]=useState(false);
   const signature=places.map(p=>p.provider_place_id+':'+p.latitude+':'+p.longitude).join('|');
   useEffect(()=>{
     if(!visible||!container.current||!places.length)return;

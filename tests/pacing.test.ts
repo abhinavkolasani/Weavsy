@@ -16,16 +16,16 @@ const request=(hours=6,budget=8000):PlanningRequest=>({startingPlace:origin,star
 const pool=()=>fixtures.map(d=>{const c=candidateFromPlace(d.place);c.openingInformation=d.opening_hours;c.hoursChecked=true;return c;});
 const matrix=(points:any[])=>({points,legs:points.map((_,i)=>points.map((__,j)=>({minutes:i===j?0:3,distanceMetres:i===j?0:1000,requestedMode:'driving' as const,actualMode:'driving' as const,source:'google-routes' as const})))});
 function run(r:PlanningRequest,candidates=pool()) {return schedule({request:r,intent:lightweightIntent.normalize(r),start:540,desiredFinish:540+(Number(r.requiredEndTime.slice(0,2))-9)*60},candidates,matrix([origin,...candidates.map(c=>c.place)]));}
-test('one itinerary grows from two to six distinct stops as outing length increases',()=>{
-  for(const [hours,count] of [[3,2],[4,3],[6,4],[8,5],[10,6]]) {
+test('longer outings add distinct experiences without padding with coffee after dessert',()=>{
+  for(const [hours,count] of [[3,2],[4,3],[6,4],[8,5],[10,5]]) {
     const r=request(hours),result=run(r);assert.equal(result.conflict,null);assert.equal(result.stops.length,count,`${hours}-hour outing`);
     assert.equal(new Set(result.stops.map(s=>s.candidate.id)).size,count);assert.equal(result.stops.filter(s=>s.candidate.role==='meal').length,1);assert.ok(result.stops.at(-1)!.departure<=540+hours*60+15);assert.deepEqual(finalConflicts(r,result.stops),[]);
   }
   assert.equal(suggestedStopCount(90),1);assert.equal(suggestedStopCount(1400),6);
 });
 test('extra stops respect a per-person budget and a hard cap rather than filling a quota',()=>{
-  const r=request(8,4000),result=run(r);assert.equal(result.conflict,null);assert.equal(result.stops.length,4);assert.equal(result.stops.reduce((s,c)=>s+c.candidate.cost.value,0),4000);assert.equal(r.budgetPerPerson.amountCents,4000);
-  const strict={...r,vibeInterests:'dinner and something fun, hard cap $20'},limited=run(strict);assert.equal(limited.stops.length,0);assert.ok(limited.rejected.some(r=>r.code==='HARD_BUDGET_CAP'));
+  const r=request(8,4000),result=run(r);assert.equal(result.conflict,null);assert.equal(result.stops.length,3);assert.equal(result.stops.reduce((s,c)=>s+c.candidate.cost.value,0),4000);assert.equal(r.budgetPerPerson.amountCents,4000);
+  const strict={...r,vibeInterests:'dinner and something fun, hard cap $20'},limited=run(strict);assert.ok(limited.stops.length>0);assert.ok(limited.stops.reduce((sum,s)=>sum+s.candidate.cost.value,0)<=2000);assert.ok(limited.rejected.some(r=>r.code==='HARD_BUDGET_CAP'));
 });
 test('closed extra places leave a valid shorter recommendation',()=>{
   const candidates=pool();for(const c of candidates.filter(c=>!['meal','main-activity'].includes(c.role)))c.openingInformation={source_expression:'TEST closed',weekly:Object.fromEntries(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d=>[d,[]]))};

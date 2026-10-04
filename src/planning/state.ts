@@ -7,14 +7,17 @@ import { STARTING_STATES } from './types.ts';
 import { emptyDraft } from './draft.ts';
 import { validateRequest } from './validate.ts';
 import { isPlaceReference } from '../world/reference.ts';
+import type { CurrentPlan } from './currentPlan.ts';
 export interface Submission { request: PlanningRequest; result: ItineraryResultShell | RealPlanResult; metadata: FounderMetadata }
-export interface PlannerState { version: 1; screen: 'form' | 'results'; draft: PlanningDraft; submission: Submission | null }
+export interface PlannerState { version: 1; screen: 'form' | 'results'; draft: PlanningDraft; submission: Submission | null; currentPlan?:CurrentPlan|null }
 export const SESSION_KEY = 'outing-planner-v01-batch1';
 export const initialState = (): PlannerState => ({ version: 1, screen: 'form', draft: emptyDraft(), submission: null });
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 export function isPlanningDraft(value: unknown): value is PlanningDraft {
   if (!record(value)) return false;
   if(value.timeZone!==undefined){if(typeof value.timeZone!=='string'||value.timeZone.length>100)return false;try{new Intl.DateTimeFormat('en',{timeZone:value.timeZone});}catch{return false;}}
+  if(value.selectedInterests!==undefined&&(!Array.isArray(value.selectedInterests)||value.selectedInterests.length>20||value.selectedInterests.some(t=>typeof t!=='string'||t.length>80)))return false;
+  if(['budgetIsCap','finishIsHard','returnToStart'].some(k=>value[k]!==undefined&&typeof value[k]!=='boolean'))return false;
   if (!['startingLocation', 'date', 'availableStartTime', 'requiredEndTime', 'budgetPerPerson', 'groupSize', 'vibeInterests'].every(k => typeof value[k] === 'string')) return false;
   if (!['', 'driving', 'walking', 'transit'].includes(String(value.transportation)) || !STARTING_STATES.some(s => s.value === value.startingState)) return false;
   if (!Array.isArray(value.existingStops)) return false;

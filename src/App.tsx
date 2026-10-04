@@ -12,6 +12,8 @@ import type { PlanningRequest } from './planning/types';
 import { hydrateSession,serializeSession } from './world/durable';
 import { worldClient } from './world/client';
 import { PolicyPage } from './components/PolicyPage';
+import { isCurrentPlan, requestToDraft } from './planning/currentPlan';
+import type { PlanEdit } from './planning/currentPlan';
 function loadSession() { try {
     return restoreState(sessionStorage.getItem(SESSION_KEY));
 }
@@ -41,6 +43,7 @@ export function App() {
         previousScreen.current = state.screen;
     } }, [state.screen]);
     async function submit(request: PlanningRequest) {
+        if(state.currentPlan){await editPlan({kind:'details',request});return;}
         if (busy)
             return;
         setBusy(true);
@@ -53,7 +56,7 @@ export function App() {
             if (!isRealPlanResult(result.result)) throw new Error('The plan response was incomplete. Your outing details are still here.');
             setRun(result);
             try { sessionStorage.setItem('outing-last-run', result.runId); } catch { setStorageUnavailable(true); }
-            setState(current => ({ ...current, screen: 'results', submission: { request:result.request ?? request, result:result.result, metadata: {...createFounderMetadata(),batch:3,plannerStatus:'built',requestId:result.runId} } }));
+            setState(current => ({ ...current, screen: 'results',draft:requestToDraft(result.request??request),currentPlan:isCurrentPlan(result.currentPlan)?result.currentPlan:null, submission: { request:result.request ?? request, result:result.result, metadata: {...createFounderMetadata(),batch:3,plannerStatus:'built',requestId:result.runId} } }));
         }
         catch (e) {
             setError(e instanceof Error ? e.message : 'Could not build the plan. Your draft is saved.');
@@ -62,11 +65,22 @@ export function App() {
             setBusy(false);
         }
     }
+    async function editPlan(edit:PlanEdit){
+      if(busy||!state.currentPlan)return;setBusy(true);setError('');
+      try{
+        const response=await fetch('/api/plans/edit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPlan:state.currentPlan,edit})});
+        const data=await response.json();if(!response.ok)throw new Error(data.error??'This change could not be applied.');
+        if(data.conflict){setError(data.conflict+' Your current plan is still shown below.');setState(s=>({...s,screen:'results'}));return;}
+        if(!isCurrentPlan(data.currentPlan))throw new Error('The updated plan was incomplete. Your current plan is still here.');
+        const plan=data.currentPlan;setRun({runId:data.runId});
+        setState(s=>({...s,screen:'results',currentPlan:plan,draft:requestToDraft(plan.request),submission:{request:plan.request,result:plan.result,metadata:{...createFounderMetadata(),batch:3,plannerStatus:'built',requestId:data.runId}}}));
+      }catch(e){setError(e instanceof Error?e.message:'The change could not load. Your current plan is still here.');}finally{setBusy(false);}
+    }
     useEffect(() => { let id: string | null = null; try { id = sessionStorage.getItem('outing-last-run'); } catch { setStorageUnavailable(true); } if (id) setRun({runId:id}); }, []);
     return <div className="app"><header className="app-header"><strong>Outing planner</strong><span className="version">Plan your time together</span></header><main ref={headingRef} tabIndex={-1}>
     {storageUnavailable && <p className="storage-notice" role="status">This browser can’t save the current tab’s draft. You can still plan, but refreshing will clear your input.</p>}
     {error && <p role="alert" className="storage-notice">{error}</p>}
-    {busy && <p role="status" className="planning-progress">Finding real places and fitting travel around your choices… This usually takes less than 30 seconds.</p>}
-    {['/terms','/privacy'].includes(window.location.pathname)?<PolicyPage privacy={window.location.pathname==='/privacy'}/>:!loaded?<p role="status" className="hint">Loading your outing…</p>:window.location.pathname.startsWith('/founder/runs') ? <RunInspector/> : window.location.pathname.startsWith('/founder') ? <PlaceLab initialOrigin={state.draft.startingPlace}/> : state.screen === 'results' && state.submission ? (state.submission.result.status==='not-generated'?<RequestSummary submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/>:<ItineraryResults submission={state.submission} onEdit={() => setState(current => ({ ...current, screen: 'form' }))}/>) : <PlanningForm draft={state.draft} busy={busy} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
+    {busy && <div role="status" className="planning-progress"><strong>{state.currentPlan?'Updating your outing…':'Building your outing…'}</strong><ol className="progress-steps"><li>Finding places that fit</li><li>Checking timing and travel</li><li>Putting the plan together</li></ol></div>}
+    {['/terms','/privacy'].includes(window.location.pathname)?<PolicyPage privacy={window.location.pathname==='/privacy'}/>:!loaded?<p role="status" className="hint">Loading your outing…</p>:window.location.pathname.startsWith('/founder/runs') ? <RunInspector/> : window.location.pathname.startsWith('/founder') ? <PlaceLab initialOrigin={state.draft.startingPlace}/> : state.screen === 'results' && state.submission ? (state.submission.result.status==='not-generated'?<RequestSummary submission={state.submission} onEdit={() => {setError('');setState(current => ({ ...current, screen: 'form' }));}}/>:<ItineraryResults submission={state.submission} busy={busy} onPlanEdit={editPlan} currentPlan={state.currentPlan} onEdit={() => {setError('');setState(current => ({ ...current, screen: 'form' }));}}/>) : <PlanningForm draft={state.draft} busy={busy} onChange={draft => setState(current => ({ ...current, draft }))} onSubmit={submit}/>}
   </main><footer className="policy-links"><a href="/terms" target="_blank" rel="noreferrer">Terms</a><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a></footer></div>;
 }

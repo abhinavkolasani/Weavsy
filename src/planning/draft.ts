@@ -14,14 +14,14 @@ export function changeStartingState(draft: PlanningDraft, next: StartingState): 
     return { draft, error: 'Remove your existing stops before choosing Nothing planned. Your decided pieces are still here.' };
   }
   let stops = draft.existingStops;
-  if (next !== 'nothing-planned' && stops.length === 0) stops = [newStop(next === 'anchor' || next === 'reservation')];
-  if (next === 'anchor' || next === 'reservation') stops = stops.map((stop, i) => i === 0 ? { ...stop, fixed: true } : stop);
+  if (next !== 'nothing-planned' && stops.length === 0) stops = [newStop(next === 'reservation')];
+  if (next === 'reservation') stops = stops.map((stop, i) => i === 0 ? { ...stop, fixed: true } : stop);
   return { draft: { ...draft, startingState: next, existingStops: stops } };
 }
 
 export function removeExistingStop(draft: PlanningDraft, id: string): PlanningDraft {
   let stops = draft.existingStops.filter(stop => stop.id !== id);
-  if (draft.startingState === 'anchor' || draft.startingState === 'reservation') {
+  if (draft.startingState === 'reservation') {
     stops = stops.map((stop, index) => index === 0 ? { ...stop, fixed: true } : stop);
   }
   return { ...draft, existingStops: stops };

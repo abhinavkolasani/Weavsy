@@ -10,11 +10,11 @@ const validDraft = (): PlanningDraft => ({ ...emptyDraft(), startingLocation: 'L
 
 test('all eight inputs are preserved as structured fields', () => {
  const result=validateRequest(validDraft()); assert(result.ok);
- assert.deepEqual(result.request,{timeZone:validDraft().timeZone,startingLocation:'Los Angeles',date:'2026-10-02',availableStartTime:'16:00',requiredEndTime:'22:00',endDayOffset:0,endDate:'2026-10-02',budgetPerPerson:{amountCents:7550,currency:'USD'},groupSize:2,transportation:'walking',vibeInterests:'Relaxed dinner and art',startingState:'nothing-planned',existingStops:[]});
+ assert.deepEqual(result.request,{timeZone:validDraft().timeZone,startingLocation:'Los Angeles',date:'2026-10-02',availableStartTime:'16:00',requiredEndTime:'22:00',endDayOffset:0,endDate:'2026-10-02',budgetPerPerson:{amountCents:7550,currency:'USD'},groupSize:2,transportation:'walking',vibeInterests:'Relaxed dinner and art',startingState:'nothing-planned',existingStops:[],selectedInterests:[],budgetIsCap:false,finishIsHard:false,returnToStart:false});
 });
 test('required values, negative budget, fractional/zero group and identical start/finish are rejected', () => {
  assert(!validateRequest(emptyDraft()).ok);
- for (const patch of [{groupSize:'0'},{groupSize:'-1'},{groupSize:'1.5'},{budgetPerPerson:'-5'},{budgetPerPerson:''},{budgetPerPerson:'1.234'},{requiredEndTime:'16:00'},{date:'2026-02-30'},{startingLocation:' '},{vibeInterests:' '}]) assert(!validateRequest({...validDraft(),...patch}).ok,JSON.stringify(patch));
+ for (const patch of [{groupSize:'0'},{groupSize:'-1'},{groupSize:'1.5'},{budgetPerPerson:'-5'},{budgetPerPerson:''},{budgetPerPerson:'1.234'},{requiredEndTime:'16:00'},{date:'2026-02-30'},{startingLocation:' '}]) assert(!validateRequest({...validDraft(),...patch}).ok,JSON.stringify(patch));
  assert(validateRequest({...validDraft(),budgetPerPerson:'0'}).ok);
 });
 test('each of the five starting states submits, with unknown duration allowed', () => {
@@ -52,10 +52,10 @@ test('bad, missing, or old tab state safely starts a fresh form', () => {
 });
 test('result shell honestly contains no generated itinerary',()=>assert.deepEqual(createResultShell(),{status:'not-generated',primaryItinerary:null}));
 
-test('removing a first anchor retains remaining pieces and their required fixed status', () => {
+test('removing an anchor retains remaining pieces without inventing a fixed time', () => {
  const first={...newStop(true),name:'First anchor'};
  const second={...newStop(),name:'Second piece'};
  const d={...validDraft(),startingState:'anchor' as const,existingStops:[first,second]};
- const next=removeExistingStop(d,first.id);assert.equal(next.existingStops.length,1);assert.equal(next.existingStops[0].id,second.id);assert.equal(next.existingStops[0].fixed,true);assert(validateRequest(next).ok);
+ const next=removeExistingStop(d,first.id);assert.equal(next.existingStops.length,1);assert.equal(next.existingStops[0].id,second.id);assert.equal(next.existingStops[0].fixed,false);assert(validateRequest(next).ok);
  const empty=removeExistingStop(next,second.id);assert.equal(empty.existingStops.length,0);assert.equal(changeStartingState(empty,'nothing-planned').error,undefined);
 });

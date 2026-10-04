@@ -1,7 +1,7 @@
 import { STARTING_STATES } from './types.ts';
 import type { PlanningDraft, PlanningRequest, ValidationErrors, ValidationResult } from './types.ts';
 import { isPlaceReference } from '../world/reference.ts';
-import { displayTime } from './displayTime.ts';
+import { displayTime, parseTypedTime } from './displayTime.ts';
 import { isClockTime, clockMinutes, outingWindow, stopTiming, addDays } from './timeline.ts';
 export const validTime = isClockTime;
 export const toMinutes = clockMinutes;
@@ -24,7 +24,6 @@ export function validateRequest(draft: PlanningDraft, options: {requirePlaceSele
   if (!/^\d+(\.\d{1,2})?$/.test(draft.budgetPerPerson) || !Number.isSafeInteger(Math.round(Number(draft.budgetPerPerson) * 100))) errors.budgetPerPerson = 'Enter a budget of $0 or more, with up to two decimal places.';
   if (!/^\d+$/.test(draft.groupSize) || !Number.isSafeInteger(Number(draft.groupSize)) || Number(draft.groupSize) < 1) errors.groupSize = 'Enter a whole number of at least 1.';
   if (!['driving', 'walking', 'transit'].includes(draft.transportation)) errors.transportation = 'Choose how you’ll get around.';
-  if (!draft.vibeInterests.trim()) errors.vibeInterests = 'Add a vibe or interest, even just one word.';
   if (!STARTING_STATES.some(s => s.value === draft.startingState)) errors.startingState = 'Choose how much of your plan already exists.';
   if (draft.startingState !== 'nothing-planned' && !draft.existingStops.length) errors.existingStops = 'Add at least one existing stop.';
   if (draft.startingState === 'nothing-planned' && draft.existingStops.length) errors.startingState = 'Choose a starting state that includes your existing stops.';
@@ -37,7 +36,7 @@ export function validateRequest(draft: PlanningDraft, options: {requirePlaceSele
     if (stop.place && (!isPlaceReference(stop.place) || stop.place.display_name !== stop.name)) errors[prefix + 'name'] = 'Search and select this place again.';
     if (stop.entryKind === 'activity' && stop.place) errors[prefix + 'name'] = 'Clear the selected place before using an activity without a venue.';
     if (options.requirePlaceSelections && stop.entryKind !== 'activity' && !stop.place) errors[prefix + 'name'] = 'Choose this place from the search results, or select an activity without a venue.';
-    if (requiredFixed && !stop.fixed) errors[prefix + 'fixed'] = 'Your anchor or reservation must remain fixed.';
+    if (draft.startingState === 'reservation' && requiredFixed && !stop.fixed) errors[prefix + 'fixed'] = 'Your reservation must remain fixed.';
     if (draft.startingState === 'reservation' && index === 0 && !stop.startTime) errors[prefix + 'startTime'] = 'Enter the fixed start time for your reservation.';
     if (stop.startTime && !validTime(stop.startTime)) errors[prefix + 'startTime'] = 'Enter a valid start time.';
     if (stop.timingDetail === 'end-time' && !validTime(stop.endTime)) errors[prefix + 'endTime'] = 'Enter an end time, or choose Not sure yet.';
@@ -61,6 +60,8 @@ export function validateRequest(draft: PlanningDraft, options: {requirePlaceSele
     budgetPerPerson: { amountCents: Math.round(Number(draft.budgetPerPerson) * 100), currency: 'USD' },
     groupSize: Number(draft.groupSize), transportation: draft.transportation as PlanningRequest['transportation'],
     vibeInterests: draft.vibeInterests.trim(), startingState: draft.startingState,
+    selectedInterests: [...(draft.selectedInterests??[])], budgetIsCap: draft.budgetIsCap??false,
+    finishIsHard: draft.finishIsHard??false, returnToStart:draft.returnToStart??false,
     existingStops: draft.existingStops.map(stop => {
       const timing = stopTiming(draft, { ...stop, endTime: stop.timingDetail === 'end-time' ? stop.endTime : '' });
       return {
@@ -71,9 +72,17 @@ export function validateRequest(draft: PlanningDraft, options: {requirePlaceSele
       ...(timing.endDayOffset !== null ? { endDayOffset: timing.endDayOffset as 0 | 1 } : {}),
       durationMinutes: stop.timingDetail === 'duration' ? Number(stop.durationMinutes) : null,
       note: stop.note.trim() || null,
+      commitmentKind: stop.entryKind==='activity'?'experience-anchor':stop.fixed&&!!stop.startTime?'fixed-commitment':'place-anchor',
+      protection:stop.entryKind==='activity'?'EXPERIENCE_ANCHOR':stop.fixed?'USER_FIXED':'USER_PLACE',
+      ...(stop.entryKind==='activity'?{experience:stop.name.trim()}:{}),
       ...(stop.place !== undefined || stop.entryKind !== undefined ? {place:stop.place ? structuredClone(stop.place) : null,source:'user' as const,entryKind:stop.entryKind ?? 'place'} : {}),
-      constraints: { preservePlace: stop.fixed, preserveStartTime: stop.fixed && !!stop.startTime, preserveEndTime: stop.fixed && stop.timingDetail === 'end-time', preserveDuration: stop.fixed && stop.timingDetail === 'duration' },
+      constraints: { preservePlace: stop.entryKind!=='activity', preserveStartTime: stop.fixed && !!stop.startTime, preserveEndTime: stop.fixed && stop.timingDetail === 'end-time', preserveDuration: stop.fixed && stop.timingDetail === 'duration' },
     }; }),
   };
+  const cap=/(?:hard cap(?: of)?|no more than|maximum|max budget|do not (?:go over|exceed)|don['’]?t (?:go over|exceed))\s*\$?\s*(\d+(?:\.\d{1,2})?)/i.exec(request.vibeInterests);
+  if(cap){request.budgetCapPerPersonCents=Math.round(Number(cap[1])*100);request.budgetIsCap=true;if(!Number.isSafeInteger(request.budgetCapPerPersonCents))return {ok:false,errors:{budgetPerPerson:'Enter a smaller budget cap.'}};}
+  else if(request.budgetIsCap)request.budgetCapPerPersonCents=request.budgetPerPerson.amountCents;
+  const home=/(?:home|back(?: at (?:home|the start|my starting point))?) by\s*(\d{1,2}(?::\d{2})?)\s*(am|pm)/i.exec(request.vibeInterests);
+  if(home){const time=parseTypedTime(home[1],home[2].toUpperCase() as 'AM'|'PM');if(time){request.requiredEndTime=time;request.finishIsHard=true;request.returnToStart=true;request.endDayOffset=outingWindow(request).endDayOffset;request.endDate=addDays(request.date,request.endDayOffset);}}
   return { ok: true, request };
 }

@@ -1,0 +1,174 @@
+[
+  {
+    "scenario": "A",
+    "status": "PASS",
+    "detail": "Experience beach, dinner and ice cream in the three-hour window; no venue required.",
+    "runId": "840a85af-fe47-4741-b502-726dd303e3c3",
+    "planId": "0e9c4f19-b275-422f-92e7-ec78a09056bf",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0",
+      "ChIJpwv-yCUw3YAR-FLtugATzAA"
+    ],
+    "elapsedMs": 757
+  },
+  {
+    "scenario": "B",
+    "status": "PASS",
+    "detail": "Selected Huntington beach venue retains its exact Place ID.",
+    "runId": "f9d7f257-aa6e-4346-bdaf-e30e53aa9983",
+    "planId": "747010e1-6046-4c42-8ea8-b3154f395c29",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJF4l1ozcv3YAR6q3FNtEdczM",
+      "ChIJRVJLD2oh3YARyy7mVSSL4kk",
+      "ChIJ63Ck9ZIh3YARPcxiLuPxW5M"
+    ],
+    "elapsedMs": 598
+  },
+  {
+    "scenario": "C",
+    "status": "PASS",
+    "detail": "Real dinner retains exact venue and 7 PM.",
+    "runId": "690e7c18-1c9c-4ee6-96b7-413a4c971fc9",
+    "planId": "47c77539-0f65-4820-bb4b-bc05033ad814",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJpwv-yCUw3YAR-FLtugATzAA",
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+    ],
+    "elapsedMs": 458
+  },
+  {
+    "scenario": "D",
+    "status": "PASS",
+    "detail": "No dessert/café duplication.",
+    "runId": "c6e018e6-c0db-41c5-80e3-aba566073620",
+    "planId": "47d9fcc6-b54d-4e74-8232-4dae0ec9a6ed",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJZWgybL4u3YARgMA_mAJ3dQM",
+      "ChIJwT25iL0u3YARKyqmS9HHgec",
+      "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k"
+    ],
+    "elapsedMs": 400
+  },
+  {
+    "scenario": "E",
+    "status": "PASS",
+    "detail": "Central LA dinner contains only qualified consumer places.",
+    "runId": "4be1be2b-6010-4051-b970-ebf5c767b74f",
+    "planId": "11106681-1b4c-40d1-9a1b-6d356b083992",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJIQlkB5zHwoARwIhkrivvITQ",
+      "ChIJc_xTWU_GwoARkdonzURemvk",
+      "ChIJ1QQrTADHwoARRhRReppivPc"
+    ],
+    "elapsedMs": 469
+  },
+  {
+    "scenario": "F",
+    "status": "PASS",
+    "detail": "A live restaurant with known closed hours at 2 AM is rejected.",
+    "runId": "2276f0dc-2155-4edf-9282-b345b0a4fdad",
+    "selectedPlaceIds": [],
+    "elapsedMs": 244
+  },
+  {
+    "scenario": "G1",
+    "status": "PASS",
+    "detail": "Dinner first recomposes the current plan.",
+    "runId": "2eb35ca6-6482-45e7-b10a-4fdaa4217891",
+    "planId": "0e9c4f19-b275-422f-92e7-ec78a09056bf",
+    "revision": 2,
+    "selectedPlaceIds": [
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0",
+      "ChIJpwv-yCUw3YAR-FLtugATzAA"
+    ],
+    "elapsedMs": 767
+  },
+  {
+    "scenario": "G2",
+    "status": "PASS",
+    "detail": "Beach kept; only dessert replaced; same current plan identity.",
+    "runId": "ee71fc35-7a64-41c6-857c-49dfb8c2957c",
+    "planId": "0e9c4f19-b275-422f-92e7-ec78a09056bf",
+    "revision": 4,
+    "selectedPlaceIds": [
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k",
+      "ChIJpwv-yCUw3YAR-FLtugATzAA"
+    ],
+    "elapsedMs": 500
+  },
+  {
+    "scenario": "H",
+    "status": "PASS",
+    "detail": "Minimal intent returns one outing without requiring a venue or chosen chips.",
+    "runId": "59fc9478-bfe7-4e09-a8a2-44a35c69b615",
+    "planId": "5f10048b-425e-4ffd-b691-e209dd33e97f",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJwT25iL0u3YARKyqmS9HHgec",
+      "ChIJdSDmJZQu3YARk5f7wMSNW0o",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+    ],
+    "elapsedMs": 401
+  },
+  {
+    "scenario": "I",
+    "status": "PASS",
+    "detail": "Fixed dinner, dessert, and actual return journey before 10:30 PM.",
+    "runId": "424061ce-3f2a-4c8b-b8ed-a4c964cca177",
+    "planId": "cd19bd1b-a1ee-4695-a30f-5a046f0ad3d7",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJZWgybL4u3YARgMA_mAJ3dQM",
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+    ],
+    "elapsedMs": 319
+  },
+  {
+    "scenario": "J",
+    "status": "PASS",
+    "detail": "Explicit $40 hard cap applied to estimates without dividing by group size.",
+    "runId": "0d52b4ca-cf88-40eb-b5b5-45cc3c7dca80",
+    "planId": "4ce3121c-a505-4bdc-a290-3db198bd9ddf",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJwT25iL0u3YARKyqmS9HHgec",
+      "ChIJdSDmJZQu3YARk5f7wMSNW0o",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+    ],
+    "elapsedMs": 309
+  },
+  {
+    "scenario": "K",
+    "status": "PASS",
+    "detail": "A live venue with unavailable/partial hours is visibly uncertain.",
+    "runId": "840a85af-fe47-4741-b502-726dd303e3c3",
+    "planId": "0e9c4f19-b275-422f-92e7-ec78a09056bf",
+    "revision": 1,
+    "selectedPlaceIds": [
+      "ChIJA1YgPLwu3YARY7nttvJCyug",
+      "ChIJ8zw1bbwu3YAR0k-onJWdzl0",
+      "ChIJpwv-yCUw3YAR-FLtugATzAA"
+    ],
+    "elapsedMs": 757
+  },
+  {
+    "scenario": "L",
+    "status": "PASS",
+    "detail": "Impossible hard finish surfaces conflict; old valid plan and kept beach retained.",
+    "runId": "b8ede2a4-9add-460e-9303-e99c8f418daa",
+    "planId": "0e9c4f19-b275-422f-92e7-ec78a09056bf",
+    "revision": 4,
+    "selectedPlaceIds": [],
+    "elapsedMs": 348
+  }
+]

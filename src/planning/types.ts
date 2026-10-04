@@ -1,10 +1,10 @@
 import type { PlaceReference } from '../world/types.ts';
 export const STARTING_STATES = [
-  { value: 'nothing-planned', label: 'Nothing planned', hint: 'Start from scratch.' },
-  { value: 'anchor', label: 'Anchor', hint: 'One place or activity to build around.' },
-  { value: 'reservation', label: 'Reservation / fixed stop', hint: 'Something with a set start time.' },
-  { value: 'partial-plan', label: 'Partial plan', hint: 'A few pieces to connect.' },
-  { value: 'almost-complete', label: 'Almost-complete plan', hint: 'Most of the day is already decided.' },
+  { value: 'nothing-planned', label: 'Nothing yet', hint: 'Plan it for me.' },
+  { value: 'anchor', label: 'One thing I want included', hint: 'I know one thing I want to do.' },
+  { value: 'reservation', label: 'Something booked / fixed', hint: 'A place or commitment at a set time.' },
+  { value: 'partial-plan', label: 'A few pieces', hint: 'I know some of the plan.' },
+  { value: 'almost-complete', label: 'Mostly planned', hint: 'Help finish it.' },
 ] as const;
 export type StartingState = typeof STARTING_STATES[number]['value'];
 export type Transportation = 'driving' | 'walking' | 'transit';
@@ -38,6 +38,11 @@ export interface PlanningDraft {
   groupSize: string;
   transportation: Transportation | '';
   vibeInterests: string;
+  selectedInterests?: string[];
+  budgetIsCap?: boolean;
+  budgetCapPerPersonCents?:number|null;
+  finishIsHard?: boolean;
+  returnToStart?: boolean;
   startingState: StartingState;
   existingStops: ExistingStopDraft[];
 }
@@ -55,6 +60,9 @@ export interface ExistingStop {
   place?: PlaceReference | null;
   source?: 'user';
   entryKind?: 'place' | 'activity';
+  commitmentKind?: 'experience-anchor' | 'place-anchor' | 'fixed-commitment';
+  protection?: 'USER_FIXED' | 'USER_KEPT' | 'USER_PLACE' | 'EXPERIENCE_ANCHOR' | 'PLANNER_FLEXIBLE';
+  experience?: string;
   constraints: {
     preservePlace: boolean;
     preserveStartTime: boolean;
@@ -75,6 +83,11 @@ export interface PlanningRequest {
   groupSize: number;
   transportation: Transportation;
   vibeInterests: string;
+  selectedInterests?: string[];
+  budgetIsCap?: boolean;
+  budgetCapPerPersonCents?:number|null;
+  finishIsHard?: boolean;
+  returnToStart?: boolean;
   startingState: StartingState;
   existingStops: ExistingStop[];
 }

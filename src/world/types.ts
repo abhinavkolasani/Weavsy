@@ -17,6 +17,8 @@ export interface PlaceReference extends Coordinates {
     details_status: 'not_requested' | 'available' | 'unavailable';
     country_code?: string;
     business_status?: string;
+    primary_type_label?: string;
+    price_signal?: { level?: string; currency?: string; low_cents?: number; high_cents?: number };
     maps_uri?: string;
     utc_offset_minutes?: number;
     attributions?: {display_name:string;uri:string}[];
@@ -43,7 +45,7 @@ export interface PlaceDetails {
   typical_duration_minutes: null;
   warnings: string[];
 }
-export type PlaceSearchType = 'food' | 'casual-food' | 'cafe' | 'dessert' | 'bowling' | 'cinema' | 'activity' | 'shopping' | 'park';
+export type PlaceSearchType = 'food' | 'casual-food' | 'cafe' | 'dessert' | 'bowling' | 'cinema' | 'activity' | 'shopping' | 'park' | 'beach' | 'museum' | 'drinks';
 export interface PlaceSearch {
   query: string;
   location?: Coordinates;
@@ -53,7 +55,7 @@ export interface PlaceSearch {
   pricePreference?: number;
   openAt?: string;
 }
-export interface SearchResult { places: PlaceReference[]; context: Coordinates | null; warnings: string[] }
+export interface SearchResult { places: PlaceReference[]; context: Coordinates | null; warnings: string[]; rejected?:{placeId:string;code:string;detail:string}[] }
 export interface WorldProvider {
   autocompleteLocation(query: string, bias?: Coordinates, sessionToken?:string): Promise<PlaceSuggestion[]>;
   autocompletePlace(query: string, bias?: Coordinates, sessionToken?:string): Promise<PlaceSuggestion[]>;

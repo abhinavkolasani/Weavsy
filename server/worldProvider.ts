@@ -12,7 +12,7 @@ const categories: Record<PlaceSearchType,string[]> = {
   food:['osm.amenity.restaurant','osm.amenity.fast_food'], 'casual-food':['osm.amenity.fast_food'], cafe:['osm.amenity.cafe'],
   dessert:['osm.amenity.ice_cream','osm.shop.bakery','osm.amenity.cafe'],
   bowling:['osm.leisure.bowling_alley'], cinema:['osm.amenity.cinema'], activity:['osm.leisure.sports_centre','osm.leisure.fitness_centre','osm.tourism.museum'],
-  shopping:['osm.shop.mall'],park:['osm.leisure.park'],
+  shopping:['osm.shop.mall'],park:['osm.leisure.park'],beach:['osm.natural.beach'],museum:['osm.tourism.museum'],drinks:['osm.amenity.bar'],
 };
 const text = (v: unknown): string | null => typeof v === 'string' && !!v.trim() ? v.trim() : null;
 function address(properties: JsonRecord): string | null {

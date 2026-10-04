@@ -16,7 +16,7 @@ test('Google identity is normalized, US-only, and raw objects do not escape',()=
   const raw=fixture();const d=normalizeGooglePlace({...raw,photos:[{huge:'not requested'}]},'2026-10-02T20:00:00Z');
   assert.ok(isPlaceReference(d.place));assert.equal(d.place.provider,'google');assert.equal(d.estimated_cost_per_person,null);assert.equal((d as any).photos,undefined);
   assert.throws(()=>normalizeGooglePlace({...raw,addressComponents:[{types:['country'],shortText:'CA'}]}),/United States/);
-  assert.throws(()=>normalizeGooglePlace({...raw,businessStatus:'CLOSED_PERMANENTLY'}),/closed/);
+  assert.equal(normalizeGooglePlace({...raw,businessStatus:'CLOSED_PERMANENTLY'}).business_status,'unavailable');
   assert.throws(()=>normalizeGooglePlace({...raw,location:null}),/location/);
 });
 test('Google weekly hours support midnight, closed days, 24/7 and current-date exceptions',()=>{
@@ -90,7 +90,7 @@ test('bounded live planner keeps cheap activities and avoids a second meal befor
   const routing={getMatrix:async(points,mode)=>({points,legs:points.map((_,i)=>points.map((__,j)=>({minutes:i===j?0:3,distanceMetres:i===j?0:1000,requestedMode:mode,actualMode:'driving',source:'google-routes'})))})};
   const draft={...emptyDraft(),startingLocation:meal.place.display_name,startingPlace:meal.place,date:'2026-10-03',availableStartTime:'16:00',requiredEndTime:'23:00',budgetPerPerson:'20',groupSize:'5',transportation:'driving',vibeInterests:'dinner and something fun'};
   const valid=validateRequest(draft,{requirePlaceSelections:true});assert.ok(valid.ok);
-  const planner=createRealPlanner(world,routing);const cheap=await planner.build(valid.request);assert.equal(cheap.result.status,'complete');assert.equal(cheap.result.primaryItinerary.costPerPersonCents,1500);assert.ok(cheap.result.primaryItinerary.stops.some(s=>s.id===park.place.provider_place_id));
+  const planner=createRealPlanner(world,routing);const cheap=await planner.build(valid.request);assert.equal(cheap.result.status,'complete');assert.equal(cheap.result.primaryItinerary.costPerPersonCents,2000);assert.ok(cheap.result.primaryItinerary.stops.some(s=>s.id===park.place.provider_place_id));
   const fixedDraft={...draft,budgetPerPerson:'40',startingState:'reservation',existingStops:[{...newStop(true),place:meal.place,name:meal.place.display_name,startTime:'19:00'}]};
   const fixed=validateRequest(fixedDraft,{requirePlaceSelections:true});assert.ok(fixed.ok);const result=await planner.build(fixed.request);assert.equal(result.result.status,'complete');assert.equal(result.result.primaryItinerary.stops.filter(s=>s.role==='meal').length,1);assert.equal(result.result.primaryItinerary.stops.find(s=>s.role==='meal').arrival,'19:00');
   const withDessert=validateRequest({...fixedDraft,budgetPerPerson:'60',vibeInterests:'dinner, something fun and dessert'},{requirePlaceSelections:true});assert.ok(withDessert.ok);

@@ -1,0 +1,40 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { qualifyPlace } from '../src/planner/qualification.ts';
+import { candidateFromPlace } from '../src/planner/estimates.ts';
+import { isOpen } from '../src/planner/schedule.ts';
+const base=process.env.OUTING_TEST_BASE_URL??'http://127.0.0.1:5174';
+const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const date=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+const evidence=[];
+async function api(path,body){const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(32000)});const data=await r.json();if(!r.ok)throw new Error(data.error??'Request failed');return data;}
+async function select(query){const list=await api('/api/world/autocomplete',{query});if(!list[0])throw new Error('No real suggestion for '+query);return(await api('/api/world/details',{placeId:list[0].provider_place_id})).place;}
+const origin=await select('Cypress, CA');
+const draft={timeZone:'America/Los_Angeles',startingLocation:origin.display_name,startingPlace:origin,date,availableStartTime:'17:00',requiredEndTime:'20:00',budgetPerPerson:'40',groupSize:'2',transportation:'driving',vibeInterests:'Dinner Beach Calm Walk around Ice cream',selectedInterests:[],startingState:'anchor',existingStops:[{id:'beach-experience',name:'beach',entryKind:'activity',place:null,fixed:false,startTime:'',endTime:'',timingDetail:'unknown',durationMinutes:'',note:''}]};
+let current;
+const record=(scenario,passed,detail,run)=>{const row={scenario,status:passed?'PASS':'FAIL',detail,...(run?{runId:run.runId,planId:run.currentPlan?.id,revision:run.currentPlan?.revision,selectedPlaceIds:run.result?.primaryItinerary?.stops.map(s=>s.id)??[],elapsedMs:run.elapsedMs}: {})};evidence.push(row);console.log(JSON.stringify(row));writeFileSync('artifacts/trust-editable/founder-live-results.json',JSON.stringify(evidence,null,2));};
+async function build(patch={}){const start=Date.now();const run=await api('/api/plans',{draft:{...draft,...patch}});run.elapsedMs=Date.now()-start;return run;}
+async function edit(plan,change){const start=Date.now();const run=await api('/api/plans/edit',{currentPlan:plan,edit:change});run.elapsedMs=Date.now()-start;return run;}
+const complete=r=>r.result?.status==='complete';const plan=r=>r.result?.primaryItinerary;const stop=(r,role)=>plan(r)?.stops.find(s=>s.role===role);
+const entry=(place,fixed=false,startTime='')=>({id:crypto.randomUUID(),name:place.display_name,place,entryKind:'place',fixed,startTime,timingDetail:'unknown',endTime:'',durationMinutes:'',note:''});
+mkdirSync('artifacts/trust-editable',{recursive:true});
+const A=await build();current=A.currentPlan;
+record('A',complete(A)&&!!stop(A,'scenic-relax')&&!!stop(A,'meal')&&!!stop(A,'dessert')&&plan(A).stops.filter(s=>['walk-explore','scenic-relax'].includes(s.role)).length===1,'Experience beach, dinner and ice cream in the three-hour window; no venue required.',A);
+let beach;
+try{beach=await select('Huntington City Beach, California');}catch{}
+if(beach&&qualifyPlace(beach).category==='Beach'){const B=await build({startingState:'anchor',existingStops:[entry(beach)]});record('B',complete(B)&&plan(B).stops.some(s=>s.id===beach.provider_place_id),'Selected Huntington beach venue retains its exact Place ID.',B);}else{record('B',false,'The Huntington query did not resolve to a qualified beach venue.');}
+const meal=stop(A,'meal')?.place;
+if(meal){const C=await build({requiredEndTime:'22:00',startingState:'reservation',existingStops:[entry(meal,true,'19:00')]});record('C',complete(C)&&stop(C,'meal')?.id===meal.provider_place_id&&stop(C,'meal')?.arrival==='19:00','Real dinner retains exact venue and 7 PM.',C);}
+const D=await build({requiredEndTime:'21:00',startingState:'nothing-planned',existingStops:[],vibeInterests:'Dinner chill dessert'});record('D',complete(D)&&plan(D).stops.filter(s=>['coffee','dessert'].includes(s.role)).length===1,'No dessert/café duplication.',D);
+const la=await select('Los Angeles, CA');const E=await build({startingLocation:la.display_name,startingPlace:la,startingState:'nothing-planned',existingStops:[],requiredEndTime:'21:00',vibeInterests:'Dinner'});record('E',complete(E)&&plan(E).stops.every(s=>qualifyPlace(s.place).accepted)&&stop(E,'meal')?.role==='meal','Central LA dinner contains only qualified consumer places.',E);
+let closed;
+for(const p of [meal,stop(D,'meal')?.place].filter(Boolean)){const d=await api('/api/world/details',{placeId:p.provider_place_id});const c=candidateFromPlace(d.place);c.openingInformation=d.opening_hours;if(d.opening_hours&&!isOpen(c,date,120,195)){closed=d.place;break;}}
+if(closed){const F=await build({availableStartTime:'01:00',requiredEndTime:'03:00',startingState:'reservation',vibeInterests:'Dinner',existingStops:[entry(closed,true,'02:00')]});record('F',!complete(F)&&/closed|opening/.test(F.result.message??''),'A live restaurant with known closed hours at 2 AM is rejected.',F);}else{record('F',false,'No suitable live closed-hours fixture was returned.');}
+if(current&&stop(A,'dessert')){const first=await edit(current,{kind:'adjust',text:'Dinner first'});record('G1',complete(first)&&!first.conflict&&plan(first).stops[0].role==='meal','Dinner first recomposes the current plan.',first);if(!first.conflict)current=first.currentPlan;
+ const kept=await edit(current,{kind:'keep',placeId:current.result.primaryItinerary.stops.find(s=>s.role==='scenic-relax').id});current=kept.currentPlan;
+ const before=current.result.primaryItinerary.stops;const oldDessert=before.find(s=>s.role==='dessert')?.id;const changed=await edit(current,{kind:'adjust',text:'Keep the beach, different dessert'});record('G2',complete(changed)&&!changed.conflict&&plan(changed).stops.some(s=>s.role==='scenic-relax'&&s.id===before.find(s=>s.role==='scenic-relax').id)&&stop(changed,'dessert')?.id!==oldDessert&&changed.currentPlan.id===current.id&&JSON.stringify(plan(changed).stops.filter(s=>s.role!=='dessert').map(s=>s.id).sort())===JSON.stringify(before.filter(s=>s.role!=='dessert').map(s=>s.id).sort()),'Beach kept; only dessert replaced; same current plan identity.',changed);if(!changed.conflict)current=changed.currentPlan;}
+const H=await build({startingState:'nothing-planned',existingStops:[],requiredEndTime:'21:00',vibeInterests:'I want to do something tonight',selectedInterests:[]});record('H',complete(H),'Minimal intent returns one outing without requiring a venue or chosen chips.',H);
+if(meal){const I=await build({startingState:'almost-complete',existingStops:[entry(meal,true,'19:00')],vibeInterests:'Dinner and dessert',requiredEndTime:'22:30',finishIsHard:true,returnToStart:true});record('I',complete(I)&&stop(I,'meal')?.arrival==='19:00'&&!!stop(I,'dessert')&&!!plan(I).returnTravel&&plan(I).finish<='22:30','Fixed dinner, dessert, and actual return journey before 10:30 PM.',I);}
+const J=await build({startingState:'nothing-planned',existingStops:[],requiredEndTime:'21:00',vibeInterests:'Dinner and dessert. Do not go over $40 per person.'});record('J',complete(J)&&plan(J).costPerPersonCents<=4000,'Explicit $40 hard cap applied to estimates without dividing by group size.',J);
+const unknown=plan(A)?.stops.find(s=>s.hoursStatus==='HOURS_UNKNOWN'||s.hoursStatus==='HOURS_PARTIAL');record('K',!!unknown&&unknown.warnings.some(w=>/Hours weren’t|Only some hours/.test(w)),'A live venue with unavailable/partial hours is visibly uncertain.',A);
+if(current){const L=await edit(current,{kind:'details',request:{...current.request,requiredEndTime:'17:15',finishIsHard:true}});record('L',!!L.conflict&&L.currentPlan.id===current.id&&L.currentPlan.result.primaryItinerary.stops.some(s=>s.protection==='USER_KEPT'&&s.role==='scenic-relax'),'Impossible hard finish surfaces conflict; old valid plan and kept beach retained.',L);}
+console.log('Founder scenario run finished. Failures must be fixed/retested or reported explicitly.');

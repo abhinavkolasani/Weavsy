@@ -2,7 +2,9 @@ import type { PlanningRequest } from '../planning/types.ts';
 import type { OpeningHours, PlaceReference, PlaceSearchType } from '../world/types.ts';
 import type { RouteEstimate } from '../routing/types.ts';
 export type ExperienceRole = 'meal' | 'main-activity' | 'casual-activity' | 'coffee' | 'dessert' | 'drinks' | 'walk-explore' | 'shopping-browse' | 'scenic-relax' | 'optional-extra';
-export interface ProductEstimate { value:number; low:number; high:number; source:'category-estimate' | 'user'; note:string }
+export type CostStatus='KNOWN_COST'|'PROVIDER_PRICE_SIGNAL'|'ESTIMATED_COST'|'SHARED_COST'|'UNKNOWN_COST';
+export interface ProductEstimate { value:number; low:number; high:number; source:'category-estimate' | 'user' | 'provider-price-signal'; note:string; status?:CostStatus; sharedCosts?:{label:string;status:'SHARED_COST'|'UNKNOWN_COST';amountCents:number|null}[] }
+export interface PlaceQualification { accepted:boolean; confidence:'high'|'medium'|'low'; providerType:string|null; category:string; role:ExperienceRole; reason:string|null; detail:string }
 export interface CandidatePlace {
   id:string;
   place:PlaceReference;
@@ -22,9 +24,13 @@ export interface CandidatePlace {
   fixedEnd:number|null;
   preferredStart:number|null;
   note:string|null;
+  qualification?:PlaceQualification;
+  protection?:ExistingProtection;
+  hoursStatus?:'OPEN_CONFIRMED'|'CLOSED_CONFIRMED'|'HOURS_UNKNOWN'|'HOURS_PARTIAL';
 }
-export interface PlannerIntent { mood:'relaxed'|'active'|'playful'; interests:string[]; desiredRoles:ExperienceRole[]; searches:PlaceSearchType[]; budgetPolicy:'target'|'hard-cap'; hardCapCents:number|null; finishPolicy:'target'; }
-export interface PlannerInput { request:PlanningRequest; intent:PlannerIntent; start:number; desiredFinish:number; }
+export type ExistingProtection='USER_FIXED'|'USER_KEPT'|'USER_PLACE'|'EXPERIENCE_ANCHOR'|'PLANNER_FLEXIBLE';
+export interface PlannerIntent { mood:'relaxed'|'active'|'playful'; interests:string[]; desiredRoles:ExperienceRole[]; searches:PlaceSearchType[]; budgetPolicy:'target'|'hard-cap'; hardCapCents:number|null; finishPolicy:'target'|'hard'; experienceAnchors?:{id:string;experience:string;search:PlaceSearchType;role:ExperienceRole}[]; repeatRoles?:ExperienceRole[]; dinnerFirst?:boolean; lessDriving?:boolean; }
+export interface PlannerInput { request:PlanningRequest; intent:PlannerIntent; start:number; desiredFinish:number; replacementRole?:ExperienceRole; }
 export interface ScheduledStop { candidate:CandidatePlace; arrival:number; departure:number; travel:RouteEstimate; bufferMinutes:number; waitMinutes:number; score:number; }
 export interface OpenWindow { start:number; end:number; beforeStopId:string|null; afterStopId:string|null; travelAccountedDuringScheduling:boolean }
 export interface Rejection { placeId:string; code:string; detail:string }
@@ -40,4 +46,5 @@ export interface PlanningDiagnostics {
   assumptions:string[];
   warnings:string[];
   conflicts:string[];
+  quality?:{lens:'EXPERIENCE_SUPPLY'|'EXPERIENCE_COMPOSITION'|'INTENT_FIDELITY'|'REAL_WORLD_ACCURACY';passed:boolean;issues:string[]}[];
 }

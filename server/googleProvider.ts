@@ -3,19 +3,26 @@ import { WEEKDAYS } from '../src/world/types.ts';
 import { isGooglePlaceId, validCoordinates } from '../src/world/reference.ts';
 import { WorldError, distanceMetres, inferSearchType } from './worldProvider.ts';
 
-export const IDENTITY_FIELDS='id,displayName,formattedAddress,location,primaryType,types,businessStatus,addressComponents,googleMapsUri,attributions,utcOffsetMinutes';
-export const PLANNING_FIELDS=IDENTITY_FIELDS+',regularOpeningHours,currentOpeningHours';
+export const IDENTITY_FIELDS='id,displayName,formattedAddress,location,primaryType,primaryTypeDisplayName,types,businessStatus,addressComponents,googleMapsUri,attributions,utcOffsetMinutes';
+// Hours already require Enterprise. Price signals use that same field tier; no reviews/photos/Atmosphere.
+export const PLANNING_FIELDS=IDENTITY_FIELDS+',regularOpeningHours,currentOpeningHours,priceLevel,priceRange';
 const GOOGLE_TYPES:Record<PlaceSearchType,string[]>={
   food:['restaurant'], 'casual-food':['fast_food_restaurant','sandwich_shop','pizza_restaurant'],
   cafe:['cafe','coffee_shop'], dessert:['ice_cream_shop','bakery','dessert_shop'],
   bowling:['bowling_alley'], cinema:['movie_theater'],
   activity:['bowling_alley','museum','sports_complex'], shopping:['shopping_mall'], park:['park'],
+  beach:['beach'],museum:['museum'],drinks:['bar'],
 };
 type Raw = Record<string,any>;
 const time=(n:number)=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
 const dateKey=(d:Raw)=>d&&Number.isInteger(d.year)&&Number.isInteger(d.month)&&Number.isInteger(d.day)?String(d.year)+'-'+String(d.month).padStart(2,'0')+'-'+String(d.day).padStart(2,'0'):null;
 const shift=(date:string,days:number)=>new Date(Date.parse(date+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
 const minutes=(point:Raw)=>point&&Number.isInteger(point.hour)&&point.hour>=0&&point.hour<=23&&Number.isInteger(point.minute??0)&&(point.minute??0)>=0&&(point.minute??0)<60?point.hour*60+(point.minute??0):null;
+function normalizePriceSignal(raw:Raw):PlaceReference['provider_metadata']['price_signal'] {
+  const cents=(money:Raw)=>money&&money.currencyCode==='USD'&&Number.isFinite(Number(money.units??0))&&Number(money.units??0)>=0?Math.round(Number(money.units??0)*100+Number(money.nanos??0)/1e7):undefined;
+  const low=cents(raw.priceRange?.startPrice),high=cents(raw.priceRange?.endPrice);
+  return raw.priceLevel||low!==undefined||high!==undefined?{...(typeof raw.priceLevel==='string'?{level:raw.priceLevel}:{}),...(low!==undefined||high!==undefined?{currency:'USD',low_cents:low,high_cents:high}:{})}:undefined;
+}
 /** Split overnight periods so the scheduler can test full visits without guessing hours. */
 export function normalizeGoogleHours(raw:Raw,fetchedAt:string):OpeningHours|null {
   const regular=raw.regularOpeningHours;
@@ -50,7 +57,6 @@ export function normalizeGooglePlace(raw:Raw,fetchedAt=new Date().toISOString())
   if(!isGooglePlaceId(raw.id))throw new WorldError('The place returned an invalid identifier. Select another result.',422);
   const country=raw.addressComponents?.find((c:Raw)=>c.types?.includes('country'))?.shortText;
   if(country!=='US')throw new WorldError('This version supports places in the United States. Choose a US location.',422);
-  if(raw.businessStatus==='CLOSED_PERMANENTLY')throw new WorldError('This place is permanently closed. Your choice has not been replaced.',410);
   const name=raw.displayName?.text??raw.formattedAddress;
   if(typeof name!=='string'||!name.trim()||!validCoordinates(raw.location))throw new WorldError('The place is missing its name or location. Choose another result.',422);
   const place:PlaceReference={
@@ -59,10 +65,12 @@ export function normalizeGooglePlace(raw:Raw,fetchedAt=new Date().toISOString())
     additional_types:Array.isArray(raw.types)?raw.types.filter((s:unknown)=>typeof s==='string'):[],fetched_at:fetchedAt,data_status:'provider',
     provider_metadata:{lookup_source:'google-places-new',geometry_kind:'point',details_status:'available',country_code:'US',business_status:raw.businessStatus,
       maps_uri:typeof raw.googleMapsUri==='string'?raw.googleMapsUri:undefined,utc_offset_minutes:raw.utcOffsetMinutes,
+      primary_type_label:typeof raw.primaryTypeDisplayName?.text==='string'?raw.primaryTypeDisplayName.text:undefined,
+      price_signal:normalizePriceSignal(raw),
       attributions:(raw.attributions??[]).filter((a:Raw)=>typeof a.provider==='string'&&typeof a.providerUri==='string').map((a:Raw)=>({display_name:a.provider,uri:a.providerUri}))},
   };
   const hours=normalizeGoogleHours(raw,fetchedAt);
-  return {place,opening_hours:hours,website:null,business_status:raw.businessStatus==='CLOSED_TEMPORARILY'?'unavailable':'listed',estimated_cost_per_person:null,typical_duration_minutes:null,warnings:hours?[]:['Opening hours were not supplied. Confirm before going.']};
+  return {place,opening_hours:hours,website:null,business_status:raw.businessStatus?.startsWith('CLOSED')?'unavailable':'listed',estimated_cost_per_person:null,typical_duration_minutes:null,warnings:hours?[]:['Hours weren’t available here — worth checking before you go.']};
 }
 /** Request-scoped world access. Provider content is not retained in a permanent catalog. */
 export function createGoogleWorldProvider(options:{key?:string;fetcher?:typeof fetch;now?:()=>Date}={}):WorldProvider&{resolveReferences(ids:string[],hints?:PlaceReference[]):Promise<Map<string,PlaceReference>>} {
@@ -106,10 +114,10 @@ export function createGoogleWorldProvider(options:{key?:string;fetcher?:typeof f
     const type=search.types?.[0]??inferSearchType(search.query);
     let raw:Raw;
     const center=search.location??{latitude:34.0522,longitude:-118.2437};
-    if(type&&search.location)raw=await call('places:searchNearby',PLANNING_FIELDS.split(',').map(f=>'places.'+f).join(','),{includedTypes:[...new Set((search.types??[type]).flatMap(t=>GOOGLE_TYPES[t]))],maxResultCount:limit,rankPreference:'DISTANCE',locationRestriction:{circle:{center:{latitude:center.latitude,longitude:center.longitude},radius}},languageCode:'en'});
-    else raw=await call('places:searchText',PLANNING_FIELDS.split(',').map(f=>'places.'+f).join(','),{textQuery:search.query,languageCode:'en',regionCode:'us',pageSize:limit,...(type?{includedType:GOOGLE_TYPES[type][0]}:{}),locationBias:{circle:{center:{latitude:center.latitude,longitude:center.longitude},radius}}});
+    if(type&&search.location)raw=await call('places:searchNearby',PLANNING_FIELDS.split(',').map(f=>'places.'+f).join(','),{includedPrimaryTypes:[...new Set((search.types??[type]).flatMap(t=>GOOGLE_TYPES[t]))],maxResultCount:limit,rankPreference:'DISTANCE',locationRestriction:{circle:{center:{latitude:center.latitude,longitude:center.longitude},radius}},languageCode:'en'});
+    else raw=await call('places:searchText',PLANNING_FIELDS.split(',').map(f=>'places.'+f).join(','),{textQuery:search.query,languageCode:'en',regionCode:'us',pageSize:limit,...(type?{includedType:GOOGLE_TYPES[type][0],strictTypeFiltering:true}:{}),includePureServiceAreaBusinesses:false,locationBias:{circle:{center:{latitude:center.latitude,longitude:center.longitude},radius}}});
     const places:PlaceReference[]=[];
-    for(const p of raw.places??[])try{const d=normalizeGooglePlace(p,now().toISOString());if(d.business_status!=='listed')continue;if(type&&search.location&&distanceMetres(center,d.place)>radius)continue;details.set(d.place.provider_place_id,d);places.push(d.place);}catch(e){if(!(e instanceof WorldError&&[410,422].includes(e.status)))throw e;}
+    for(const p of raw.places??[])try{const d=normalizeGooglePlace(p,now().toISOString());if(type&&search.location&&distanceMetres(center,d.place)>radius)continue;details.set(d.place.provider_place_id,d);places.push(d.place);}catch(e){if(!(e instanceof WorldError&&[410,422].includes(e.status)))throw e;}
     return {places:[...new Map(places.map(p=>[p.provider_place_id,p])).values()].slice(0,limit),context:search.location??null,warnings:[]};
   }
   return {autocompleteLocation:autocomplete,autocompletePlace:autocomplete,searchPlaces,getPlaceDetails,

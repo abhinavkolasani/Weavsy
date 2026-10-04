@@ -35,7 +35,7 @@ test('cloud API builds an overnight plan and persists fixed intent, IDs and per-
   const fetcher = async (url: any, init: any) => {
     const address = String(url), body = init.body ? JSON.parse(init.body) : null;
     if (address.includes('computeRouteMatrix')) return Response.json(body.origins.flatMap((_: unknown, i: number) => body.destinations.map((__: unknown, j: number) => ({ originIndex: i, destinationIndex: j, condition: 'ROUTE_EXISTS', duration: i === j ? '0s' : '300s', distanceMeters: i === j ? 0 : 1500 }))));
-    if (address.includes('searchNearby')) return Response.json({ places: body.includedTypes.includes('bowling_alley') ? [activity] : body.includedTypes.includes('restaurant') ? [meal] : [] });
+    if (address.includes('searchNearby')) return Response.json({ places: body.includedPrimaryTypes.includes('bowling_alley') ? [activity] : body.includedPrimaryTypes.includes('restaurant') ? [meal] : [] });
     const record = [origin, meal, activity].find(p => address.includes('/places/' + p.id));
     assert.ok(record, 'Unexpected provider request in isolated TEST scenario'); return Response.json(record);
   };
