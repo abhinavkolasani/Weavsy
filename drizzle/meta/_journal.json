@@ -8,6 +8,13 @@
       "when": 1791000492549,
       "tag": "0000_regular_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791580377839,
+      "tag": "0001_durable_plans",
+      "breakpoints": true
     }
   ]
 }

@@ -58,12 +58,12 @@ export function scoreCandidate(input:PlannerInput,candidate:CandidatePlace) {
 }
 export interface ScheduleResult { stops:ScheduledStop[]; rejected:Rejection[]; conflict:string|null }
 /** Bounded beam search over mandatory pieces + a small candidate universe. No provider ranking shortcut. */
-export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:RouteMatrix):ScheduleResult {
+export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:RouteMatrix,sequence?:string[]):ScheduleResult {
   const rejected=new Map<string,Rejection>();
   const reject=(c:CandidatePlace,code:string,detail:string)=>rejected.set(`${c.id}:${code}`,{placeId:c.id,code,detail});
   const mandatory=candidates.filter(c=>c.userStopId);
   const fixed=mandatory.filter(c=>fixedTime(c)!==null).sort((a,b)=>fixedTime(a)!-fixedTime(b)!);
-  const targetStops=input.replacementRole?mandatory.length+1:Math.max(mandatory.length,Math.min(6,Math.max(input.intent.desiredRoles.length,suggestedStopCount(input.desiredFinish-input.start))));
+  const targetStops=sequence?.length??(input.replacementRole?mandatory.length+1:Math.max(mandatory.length,Math.min(6,Math.max(input.intent.desiredRoles.length,suggestedStopCount(input.desiredFinish-input.start)))));
   const maxStops=targetStops;
   const fixedFinish=Math.max(input.desiredFinish,...fixed.map(c=>(c.fixedEnd??fixedTime(c)!+c.duration.value)));
   const limit=Math.min(input.start+1440,input.intent.finishPolicy==='hard'?input.desiredFinish:fixedFinish+15);
@@ -85,18 +85,18 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
       const used=new Set(state.stops.map(s=>s.candidate.id));
       const nextFixed=fixed.find(c=>!used.has(c.id));
       for(let i=0;i<candidates.length;i++) {
-        const c=candidates[i];if(used.has(c.id))continue;
+        const c=candidates[i];if(used.has(c.id)||sequence&&c.id!==sequence[depth])continue;
         if(c.qualification&&!c.qualification.accepted){reject(c,c.qualification.reason??'LOW_PLACE_CONFIDENCE',c.qualification.detail);continue;}
         if(c.place.provider_metadata.business_status?.startsWith('CLOSED')){reject(c,'CLOSED_BUSINESS','Provider reports a closed business.');continue;}
         if(!c.userStopId&&input.replacementRole&&c.role!==input.replacementRole)continue;
-        if(!c.userStopId&&!(input.intent.repeatRoles??[]).includes(c.role)&&mandatory.some(p=>p.role===c.role)){reject(c,'DUPLICATE_ROLE','An existing choice already serves this role.');continue;}
+        if(!sequence&&!c.userStopId&&!(input.intent.repeatRoles??[]).includes(c.role)&&mandatory.some(p=>p.role===c.role)){reject(c,'DUPLICATE_ROLE','An existing choice already serves this role.');continue;}
         if(fixedTime(c)!==null&&nextFixed?.id!==c.id)continue;
-        if(!c.userStopId&&!(input.intent.repeatRoles??[]).includes(c.role)&&state.stops.some(s=>roleFamily(s.candidate.role)===roleFamily(c.role))){reject(c,'DUPLICATE_ROLE','An existing stop already serves this experience family.');continue;}
+        if(!sequence&&!c.userStopId&&!(input.intent.repeatRoles??[]).includes(c.role)&&state.stops.some(s=>roleFamily(s.candidate.role)===roleFamily(c.role))){reject(c,'DUPLICATE_ROLE','An existing stop already serves this experience family.');continue;}
         if(!c.userStopId&&input.intent.dinnerFirst&&!state.stops.length&&c.role!=='meal'){reject(c,'REQUESTED_SEQUENCE','You asked for the meal first.');continue;}
         const travel=matrix.legs[state.previous]?.[i+1];
         if(!travel){reject(c,'TRANSPORT_MISMATCH','No usable route for the selected mode.');continue;}
         const maxJourney=input.request.transportation==='driving'?(input.intent.lessDriving?20:35):30;
-        if(!c.userStopId&&travel.minutes>maxJourney){reject(c,'TOO_FAR','Journey is too long for a compact outing.');continue;}
+        if(!sequence&&!c.userStopId&&travel.minutes>maxJourney){reject(c,'TOO_FAR','Journey is too long for a compact outing.');continue;}
         const buffer=travel.distanceMetres===0?0:travel.actualMode==='driving'?10:5;
         const ready=state.cursor+travel.minutes+buffer;
         let arrival:number;
@@ -117,9 +117,9 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
         }
         const cost=state.cost+c.cost.value;
         const remainingCommitments=mandatory.filter(m=>!used.has(m.id)&&m.id!==c.id).reduce((sum,m)=>sum+m.cost.value,0);
-        if(!c.userStopId&&!desired.includes(c.role)&&cost+remainingCommitments>Math.max(baseline,target)){reject(c,'EXTRA_BUDGET_MISMATCH','An added break would use budget reserved for the outing.');continue;}
+        if(!sequence&&!c.userStopId&&!desired.includes(c.role)&&cost+remainingCommitments>Math.max(baseline,target)){reject(c,'EXTRA_BUDGET_MISMATCH','An added break would use budget reserved for the outing.');continue;}
         if(cap!==null&&cost>cap){reject(c,'HARD_BUDGET_CAP','Estimated spend exceeds the explicitly stated cap.');continue;}
-        if(!c.userStopId&&cost>severeLimit){reject(c,'SEVERE_BUDGET_MISMATCH','Estimated spend would substantially exceed the target.');continue;}
+        if(!sequence&&!c.userStopId&&cost>severeLimit){reject(c,'SEVERE_BUDGET_MISMATCH','Estimated spend would substantially exceed the target.');continue;}
         const wait=Math.max(0,arrival-ready);
         const timingPreference=c.preferredStart!==null&&fixedAt===null?Math.abs(arrival-c.preferredStart)*.025:0;
         const localMinute=arrival%1440;
@@ -130,9 +130,10 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
         const score=scoreCandidate(input,c).total-travel.minutes*(input.intent.lessDriving?2:.65)-wait*.15-timingPreference-outdoorLate-dessertBeforeMeal+progression+(c.protection==='PLANNER_FLEXIBLE'&&c.userStopId?8:0);
         const stop:ScheduledStop={candidate:c,arrival,departure,travel,bufferMinutes:buffer,waitMinutes:wait,score};
         const ns:State={stops:[...state.stops,stop],cursor:departure,previous:i+1,cost,score:state.score+score};next.push(ns);
-        const extrasOverBudget=cost>Math.max(baseline,target)&&ns.stops.some(s=>!s.candidate.userStopId&&!desired.includes(s.candidate.role)&&s.candidate.cost.value>0);
-        if(!extrasOverBudget&&anchored(ns.stops)&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&(!mandatoryOnly||quality(ns)>quality(mandatoryOnly)))mandatoryOnly=ns;
-        if(!extrasOverBudget&&anchored(ns.stops)&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&desired.every(r=>covered(r,ns.stops))) {
+        const extrasOverBudget=!sequence&&cost>Math.max(baseline,target)&&ns.stops.some(s=>!s.candidate.userStopId&&!desired.includes(s.candidate.role)&&s.candidate.cost.value>0);
+        const sequenceComplete=!sequence||ns.stops.length===sequence.length;
+        if(sequenceComplete&&!extrasOverBudget&&anchored(ns.stops)&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&(!mandatoryOnly||quality(ns)>quality(mandatoryOnly)))mandatoryOnly=ns;
+        if(sequenceComplete&&!extrasOverBudget&&anchored(ns.stops)&&mandatory.every(m=>ns.stops.some(s=>s.candidate.id===m.id))&&(sequence||desired.every(r=>covered(r,ns.stops)))) {
           const value=quality(ns);if(value>bestValue){best=ns;bestValue=value;}
         }
       }

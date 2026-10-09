@@ -10,6 +10,7 @@ import { emptyDraft, newStop } from '../src/planning/draft.ts';
 function database() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(readFileSync('drizzle/0000_regular_forge.sql', 'utf8'));
+  sqlite.exec(readFileSync('drizzle/0001_durable_plans.sql', 'utf8'));
   const db = { prepare(sql: string) { let values: any[] = []; const statement = sqlite.prepare(sql); const adapter = { bind(...args: any[]) { values = args; return adapter; }, async first() { return statement.get(...values) ?? null; }, async run() { return statement.run(...values); } }; return adapter; }, async batch(statements: any[]) { sqlite.exec('BEGIN'); try { const results = []; for (const statement of statements) results.push(await statement.run()); sqlite.exec('COMMIT'); return results; } catch (error) { sqlite.exec('ROLLBACK'); throw error; } } };
   return { sqlite, db };
 }
@@ -54,6 +55,18 @@ test('public rate limits are shared by independent database adapters and exclude
   for (let i = 0; i < 6; i++) assert.equal(await withinPublicLimits(db, r, at), true);
   assert.equal(await withinPublicLimits({ ...db }, r, at), false); assert.equal(await withinPublicLimits(db, r, at + 300000), true);
   assert.equal(JSON.stringify(sqlite.prepare('SELECT * FROM request_limits').all()).includes('192.0.2.42'), false); sqlite.close();
+});
+test('D1-compatible adapters archive revisions atomically and share authoritative plans across API instances',async()=>{
+  const {sqlite,db}=database();try{
+    const first=createCloudStore(db),second=createCloudStore({...db});
+    const r={id:'TEST_D1_PLAN',revision:1,tokenHash:'TEST_HASH',snapshot:'{"history":[]}',updatedAt:'2026-10-09T12:00:00Z'};
+    await first.insertPlan(r);assert.equal((await second.getPlan(r.id))?.revision,1);
+    assert.equal(await second.updatePlan({...r,revision:2,snapshot:'{"history":["kept"]}'},1),true);
+    assert.equal(await first.updatePlan({...r,revision:2,snapshot:'{"lost":true}'},1),false);
+    assert.equal((await first.getPlan(r.id))?.snapshot,'{"history":["kept"]}');
+    assert.deepEqual(sqlite.prepare('SELECT revision FROM saved_plan_versions ORDER BY revision').all().map(r=>r.revision),[1,2]);
+    sqlite.exec(readFileSync('drizzle/0001_durable_plans.sql','utf8'));assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM saved_plan_versions').get()!.n,2);
+  }finally{sqlite.close();}
 });
 test('cloud entry point refuses private files, founder paths and cross-site API posts', async () => {
   const { sqlite, db } = database(); const env = { DB: db, ASSETS: { fetch: async (r:Request) => new URL(r.url).pathname==='/index.html'?new Response('TEST frontend'):new Response('Not found',{status:404}) } };

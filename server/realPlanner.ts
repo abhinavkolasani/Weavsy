@@ -13,6 +13,9 @@ import { outingClock } from '../src/planning/clock.ts';
 import { outingWindow, stopTiming, timelineClock, timelineDay } from '../src/planning/timeline.ts';
 import { distanceMetres, WorldError } from './worldProvider.ts';
 import { suggestedStopCount } from '../src/planner/pacing.ts';
+import type { ModelGateway } from './model/gateway.ts';
+import type { CurrentPlan } from '../src/planning/currentPlan.ts';
+import { proposalIdentityErrors } from './model/validateProposal.ts';
 const clock=timelineClock;
 
 export function finalConflicts(request:PlanningRequest,stops:ScheduledStop[]):string[] {
@@ -20,7 +23,7 @@ export function finalConflicts(request:PlanningRequest,stops:ScheduledStop[]):st
   const ids=new Set<string>();
   for(const stop of stops) {
     const c=stop.candidate;
-    if(!isPlaceReference(c.place)||ids.has(c.id))errors.push('The outing contains an invalid or repeated place.');ids.add(c.id);
+    if(!isPlaceReference(c.place)||c.id!==c.place.provider_place_id||ids.has(c.id))errors.push('The outing contains an invalid or repeated place.');ids.add(c.id);
     if(!Number.isFinite(stop.travel.minutes)||stop.travel.minutes<0||!Number.isFinite(c.cost.value)||c.cost.value<0||(request.transportation==='driving'&&stop.travel.actualMode!=='driving'))errors.push('A cost or travel estimate is invalid.');
     if(stop.arrival<cursor+stop.travel.minutes+stop.bufferMinutes||stop.departure<=stop.arrival||stop.departure>toMinutes(request.availableStartTime)+1440)errors.push('The outing has conflicting travel or visit times.');
     if(fixedTime(c)!==null&&stop.arrival!==fixedTime(c))errors.push('A fixed arrival was changed.');
@@ -39,8 +42,8 @@ export function finalConflicts(request:PlanningRequest,stops:ScheduledStop[]):st
   }
   return [...new Set(errors)];
 }
-export function createRealPlanner(world:WorldProvider,routing:RoutingService,options:{clock?:()=>Date}={}) {
-  return {async build(request:PlanningRequest,context:{retainedStops?:OutingStop[];excludedIds?:string[];surgical?:boolean;replacementRole?:ExperienceRole}={}):Promise<{result:RealPlanResult;diagnostics:PlanningDiagnostics}> {
+export function createRealPlanner(world:WorldProvider,routing:RoutingService,options:{clock?:()=>Date;model?:ModelGateway}={}) {
+  return {async build(request:PlanningRequest,context:{retainedStops?:OutingStop[];excludedIds?:string[];surgical?:boolean;replacementRole?:ExperienceRole;currentPlan?:CurrentPlan|null}={}):Promise<{result:RealPlanResult;diagnostics:PlanningDiagnostics}> {
     const window=outingWindow(request);
     const input:PlannerInput={request:structuredClone(request),intent:lightweightIntent.normalize(request),start:window.start,desiredFinish:window.finish,...(context.surgical?{replacementRole:context.replacementRole}:{})};
     if(input.replacementRole){const search:Record<ExperienceRole,PlaceSearchType>={meal:'food','main-activity':'activity','casual-activity':'activity',coffee:'cafe',dessert:'dessert',drinks:'drinks','walk-explore':'park','shopping-browse':'shopping','scenic-relax':'beach','optional-extra':'activity'};if(!input.intent.searches.includes(search[input.replacementRole]))input.intent.searches.push(search[input.replacementRole]);if(!input.intent.desiredRoles.includes(input.replacementRole))input.intent.desiredRoles.push(input.replacementRole);}
@@ -157,6 +160,14 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       if(options.clock){const now=outingClock(request.timeZone,request.startingPlace,options.clock());if(request.date<now.date)return fail('This date has already passed. Choose today or a future date.');if(request.date===now.date)input.start=Math.max(input.start,toMinutes(now.time));diagnostics.openWindows=findWindows(input,existing);const elapsedConflicts=fixedConflicts(input,existing);if(elapsedConflicts.length)return fail(elapsedConflicts.join(' '));}
       diagnostics.routes=matrix.legs.flatMap((row,i)=>row.flatMap((estimate,j)=>i!==j?[{from:i===0?request.startingPlace!.provider_place_id:pool[i-1].id,to:j===0?request.startingPlace!.provider_place_id:pool[j-1].id,estimate}]:[]));
       diagnostics.scores=pool.map(c=>({placeId:c.id,...scoreCandidate(input,c)}));
+      let proposedSequence:string[]|undefined;
+      if(options.model){
+        const available=pool.filter(c=>!excluded.has(c.id)),indices=[0,...available.map(c=>pool.indexOf(c)+1)];
+        const subset={points:indices.map(i=>matrix.points[i]),legs:indices.map(i=>indices.map(j=>matrix.legs[i][j]))};
+        const outcome=await options.model.propose({input,candidates:available,matrix:subset,currentPlan:context.currentPlan,task:context.surgical?'swap':context.currentPlan?.execution?.length?'repair':context.currentPlan?'modify':'create'});
+        diagnostics.reasoning=outcome.metrics;
+        if(outcome.proposal){const errors=proposalIdentityErrors(outcome.proposal,available);if(errors.length){outcome.metrics.status='rejected';outcome.metrics.validationErrors=errors;}else proposedSequence=outcome.proposal.stops.map(s=>s.place_id);}
+      }
       let selected:ScheduledStop[]=[];
       // Only finalists need extra detail calls. Recheck after hours/status refresh, then resequence.
       for(let attempt=0;attempt<4;attempt++) {
@@ -164,7 +175,11 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
         const available=pool.filter(c=>!excluded.has(c.id));
         const indices=[0,...available.map(c=>pool.indexOf(c)+1)];
         const subset={points:indices.map(i=>matrix.points[i]),legs:indices.map(i=>indices.map(j=>matrix.legs[i][j]))};
-        let result=schedule(input,available,subset);diagnostics.rejected.push(...result.rejected);
+        let result=schedule(input,available,subset,proposedSequence);
+        if(proposedSequence&&(result.conflict||result.stops.length!==proposedSequence.length)){
+          diagnostics.reasoning!.status='rejected';diagnostics.reasoning!.validationErrors=['REALITY_CONFLICT'];proposedSequence=undefined;result=schedule(input,available,subset);
+        }
+        diagnostics.rejected.push(...result.rejected);
         if(result.conflict&&context.retainedStops?.length&&!context.surgical) {
           const flexible=available.map(c=>c.protection==='PLANNER_FLEXIBLE'?{...c,userStopId:null}:c);
           result=schedule(input,flexible,subset);diagnostics.rejected.push(...result.rejected);
@@ -193,19 +208,20 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
         selected=result.stops;break;
       }
       if(!selected.length)return fail('The available places’ hours could not support a complete outing. Try a different window or interest.');
-      if(options.clock){const now=outingClock(request.timeZone,request.startingPlace,options.clock());if(request.date===now.date&&toMinutes(now.time)>input.start){input.start=toMinutes(now.time);const available=pool.filter(c=>!excluded.has(c.id));const indices=[0,...available.map(c=>pool.indexOf(c)+1)];const refreshed=schedule(input,available,{points:indices.map(i=>matrix.points[i]),legs:indices.map(i=>indices.map(j=>matrix.legs[i][j]))});if(refreshed.conflict)return fail(refreshed.conflict);if(refreshed.stops.some(s=>!s.candidate.hoursChecked))return fail('Time moved forward while checking places. Please build again to refresh the outing.');selected=refreshed.stops;diagnostics.openWindows=findWindows(input,existing);}}
-      const final=finalConflicts(request,selected);if(final.length)return fail(final.join(' '));
+      if(options.clock){const now=outingClock(request.timeZone,request.startingPlace,options.clock());if(request.date===now.date&&toMinutes(now.time)>input.start){input.start=toMinutes(now.time);const available=pool.filter(c=>!excluded.has(c.id));const indices=[0,...available.map(c=>pool.indexOf(c)+1)];const refreshed=schedule(input,available,{points:indices.map(i=>matrix.points[i]),legs:indices.map(i=>indices.map(j=>matrix.legs[i][j]))},proposedSequence);if(refreshed.conflict)return fail(refreshed.conflict);if(refreshed.stops.some(s=>!s.candidate.hoursChecked))return fail('Time moved forward while checking places. Please build again to refresh the outing.');selected=refreshed.stops;diagnostics.openWindows=findWindows(input,existing);}}
+      const final=finalConflicts(request,selected);if(final.length){if(diagnostics.reasoning&&proposedSequence){diagnostics.reasoning.status='rejected';diagnostics.reasoning.validationErrors=['FINAL_REALITY_CONFLICT'];}return fail(final.join(' '));}
       const costEstimate=selected.reduce((sum,s)=>sum+s.candidate.cost.value,0);
       const end=selected.at(-1)!.departure;
       const returnTravel=request.returnToStart?matrix.legs[pool.findIndex(c=>c.id===selected.at(-1)!.candidate.id)+1]?.[0]:undefined;
       const finish=end+(returnTravel?.minutes??0)+(returnTravel?.distanceMetres?10:0);
       const quality=[
         {lens:'EXPERIENCE_SUPPLY' as const,issues:selected.flatMap(s=>s.candidate.qualification&&!s.candidate.qualification.accepted?[s.candidate.qualification.detail]:[])},
-        {lens:'EXPERIENCE_COMPOSITION' as const,issues:selected.flatMap((s,i)=>!s.candidate.userStopId&&!(input.intent.repeatRoles??[]).includes(s.candidate.role)&&selected.slice(0,i).some(p=>roleFamily(p.candidate.role)===roleFamily(s.candidate.role))?['An automatic stop repeats an experience unnecessarily.']:[])},
+        {lens:'EXPERIENCE_COMPOSITION' as const,issues:proposedSequence?[]:selected.flatMap((s,i)=>!s.candidate.userStopId&&!(input.intent.repeatRoles??[]).includes(s.candidate.role)&&selected.slice(0,i).some(p=>roleFamily(p.candidate.role)===roleFamily(s.candidate.role))?['An automatic stop repeats an experience unnecessarily.']:[])},
         {lens:'INTENT_FIDELITY' as const,issues:[...(input.intent.experienceAnchors??[]).filter(a=>!selected.some(s=>s.candidate.role===a.role&&qualifyPlace(s.candidate.place,a.search).accepted)).map(a=>'The '+a.experience+' experience is missing.'),...(context.retainedStops??[]).filter(s=>['USER_KEPT','USER_FIXED','USER_PLACE'].includes(s.protection??'')&&!selected.some(p=>p.candidate.id===s.id)).map(()=> 'A protected place was not preserved.')]},
         {lens:'REAL_WORLD_ACCURACY' as const,issues:[...(input.intent.finishPolicy==='hard'&&finish>input.desiredFinish?['The required finish would be missed.']:[]),...(input.intent.hardCapCents!==null&&costEstimate>input.intent.hardCapCents?['The hard budget cap would be exceeded.']:[])]}
       ].map(q=>({...q,passed:!q.issues.length}));diagnostics.quality=quality;
       if(quality.some(q=>!q.passed))return fail(quality.flatMap(q=>q.issues).join(' '));
+      if(proposedSequence&&diagnostics.reasoning)diagnostics.reasoning.status='accepted';
       const warnings=new Set<string>(diagnostics.warnings);
       warnings.add('Costs use category estimates or Google price signals, not verified menu or ticket prices. Parking, passes and other shared costs may be extra.');
       warnings.add('Travel uses mapped roads or footpaths without live traffic. Each journey includes a separate transition allowance.');

@@ -11,9 +11,11 @@ export function PlacePicker({id,value,place,onChange,bias,error,placeholder}: {
   const [results,setResults]=useState<PlaceSuggestion[]>([]),[loading,setLoading]=useState(false),[message,setMessage]=useState(''),[open,setOpen]=useState(false),[focused,setFocused]=useState(false),[active,setActive]=useState(-1),[retry,setRetry]=useState(0);
   const sessionToken=useRef(crypto.randomUUID());
   const generation=useRef(0),selectionAbort=useRef(false);
+  const selecting=useRef(false);
   const latestOnChange=useRef(onChange);
   latestOnChange.current=onChange;
   useEffect(()=>{
+    if(selecting.current)return; // Moving focus must not cancel a clicked selection while details load.
     const token=++generation.current;selectionAbort.current=false;
     if(place||value.trim().length<2||!focused){setResults([]);setLoading(false);setMessage('');return;}
     const controller=new AbortController();
@@ -27,6 +29,7 @@ export function PlacePicker({id,value,place,onChange,bias,error,placeholder}: {
   },[value,place,focused,bias?.latitude,bias?.longitude,retry]);
   useEffect(()=>()=>{generation.current++;selectionAbort.current=true;},[]);
   async function select(candidate:PlaceSuggestion) {
+    selecting.current=true;
     const token=++generation.current;setLoading(true);setMessage('');setResults([]);
     const selectedSession=sessionToken.current;sessionToken.current=crypto.randomUUID();
     try {
@@ -35,9 +38,9 @@ export function PlacePicker({id,value,place,onChange,bias,error,placeholder}: {
       if(!isPlaceReference(resolved))throw new Error('This place could not be confirmed. Please select another result.');
       latestOnChange.current(resolved.display_name,resolved);setOpen(false);setFocused(false);
     }catch(e){if(token===generation.current){setMessage(e instanceof Error?e.message:'Could not select this place. Try again.');setOpen(true);}}
-    finally{if(token===generation.current)setLoading(false);}
+    finally{if(token===generation.current){selecting.current=false;setLoading(false);}}
   }
-  const inputChanged=(next:string)=>{generation.current++;onChange(next,null);setOpen(true);setFocused(true);setResults([]);setMessage('');setActive(-1);};
+  const inputChanged=(next:string)=>{selecting.current=false;generation.current++;onChange(next,null);setOpen(true);setFocused(true);setResults([]);setMessage('');setActive(-1);};
   const selectedText=place?(id==='startingLocation'?place.formatted_address??place.display_name:[place.display_name,place.formatted_address].filter(Boolean).join(' · ')):value;
   return <div className="place-picker">
     <input id={id} role="combobox" aria-autocomplete="list" aria-expanded={open&&!place&&(loading||!!message||results.length>0)} aria-controls={`${id}-suggestions`} aria-activedescendant={active>=0?`${id}-option-${active}`:undefined} autoComplete="off" value={selectedText} placeholder={placeholder??'Search a US place or address'} {...fieldAccessibility(id,error)} onChange={e=>inputChanged(e.target.value)} onFocus={()=>{setFocused(true);if(!place)setOpen(true);}} onBlur={()=>{setFocused(false);setOpen(false);setActive(-1);}}

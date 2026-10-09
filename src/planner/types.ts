@@ -35,6 +35,7 @@ export interface ScheduledStop { candidate:CandidatePlace; arrival:number; depar
 export interface OpenWindow { start:number; end:number; beforeStopId:string|null; afterStopId:string|null; travelAccountedDuringScheduling:boolean }
 export interface Rejection { placeId:string; code:string; detail:string }
 export interface PlanningDiagnostics {
+  reasoning?: import('./reasoning.ts').ModelMetrics;
   normalizedInput:PlannerInput;
   decisions:{stopId:string; placeId:string|null; fixed:boolean; startTime:string|null; endTime:string|null; durationMinutes:number|null}[];
   openWindows:OpenWindow[];
