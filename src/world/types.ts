@@ -45,7 +45,7 @@ export interface PlaceDetails {
   typical_duration_minutes: null;
   warnings: string[];
 }
-export type PlaceSearchType = 'food' | 'casual-food' | 'cafe' | 'dessert' | 'bowling' | 'cinema' | 'activity' | 'shopping' | 'park' | 'beach' | 'museum' | 'drinks';
+export type PlaceSearchType = 'food' | 'casual-food' | 'cafe' | 'dessert' | 'bowling' | 'cinema' | 'activity' | 'shopping' | 'park' | 'beach' | 'museum' | 'drinks' | 'study';
 export interface PlaceSearch {
   query: string;
   location?: Coordinates;

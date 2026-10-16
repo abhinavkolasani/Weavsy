@@ -25,7 +25,8 @@ test('longer outings add distinct experiences without padding with coffee after 
 });
 test('extra stops respect a per-person budget and a hard cap rather than filling a quota',()=>{
   const r=request(8,4000),result=run(r);assert.equal(result.conflict,null);assert.equal(result.stops.length,3);assert.equal(result.stops.reduce((s,c)=>s+c.candidate.cost.value,0),4000);assert.equal(r.budgetPerPerson.amountCents,4000);
-  const strict={...r,vibeInterests:'dinner and something fun, hard cap $20'},limited=run(strict);assert.ok(limited.stops.length>0);assert.ok(limited.stops.reduce((sum,s)=>sum+s.candidate.cost.value,0)<=2000);assert.ok(limited.rejected.some(r=>r.code==='HARD_BUDGET_CAP'));
+  // Meal + activity cannot fit this fixture's $20 cap. A meal-only "complete" result would hide the missing activity.
+  const strict={...r,vibeInterests:'dinner and something fun, hard cap $20'},limited=run(strict);assert.ok(limited.conflict);assert.equal(limited.stops.length,0);assert.ok(limited.rejected.some(r=>r.code==='HARD_BUDGET_CAP'));
 });
 test('closed extra places leave a valid shorter recommendation',()=>{
   const candidates=pool();for(const c of candidates.filter(c=>!['meal','main-activity'].includes(c.role)))c.openingInformation={source_expression:'TEST closed',weekly:Object.fromEntries(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d=>[d,[]]))};

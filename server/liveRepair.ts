@@ -11,6 +11,8 @@ import { candidateFromPlace } from '../src/planner/estimates.ts';
 import { isOpen,openingStatus } from '../src/planner/schedule.ts';
 import { lightweightIntent } from '../src/planner/intent.ts';
 import { refreshEstimatedTotals } from '../src/itinerary/totals.ts';
+import { withoutBudgetCap } from '../src/planning/budget.ts';
+import { visitWarnings } from '../src/planner/visitWarnings.ts';
 
 import type { LiveAction } from '../src/planning/live.ts';
 export type { LiveAction } from '../src/planning/live.ts';
@@ -70,6 +72,7 @@ export async function applyLiveAction(plan:CurrentPlan,action:LiveAction,world:W
     if(departure>outingWindow(plan.request).start+1439)return conflict('That would extend beyond this outing’s one-day window. Your times are unchanged.');
     stop.place=detail.place;stop.travel=leg;stop.transitionMinutes=buffer;stop.waitMinutes=Math.max(0,arrival-ready);
     stop.arrival=timelineClock(arrival);stop.arrivalDayOffset=timelineDay(arrival);stop.departure=timelineClock(departure);stop.departureDayOffset=timelineDay(departure);stop.hoursStatus=openingStatus(candidate,plan.request.date,arrival,departure);
+    stop.warnings=visitWarnings(stop.category,stop.hoursStatus);
     cursor=departure;
   }
   const back=plan.request.returnToStart?matrix.legs[future.length]?.[future.length+1]:null;
@@ -109,7 +112,7 @@ export function remainingContext(plan:CurrentPlan,request:PlanningRequest,retain
   const estimatedPast=past.filter(s=>plan.execution?.some(e=>e.type==='completed'&&e.placeId===s.id)).reduce((sum,s)=>sum+s.cost.value,0);
   const intent=lightweightIntent.normalize(request);if(intent.hardCapCents!==null&&estimatedPast>intent.hardCapCents)throw new Error('Completed stops already exceed the new cap in estimates. Your history is preserved.');
   working.budgetPerPerson.amountCents=Math.max(0,working.budgetPerPerson.amountCents-estimatedPast);
-  if(intent.hardCapCents!==null){working.budgetIsCap=true;working.budgetCapPerPersonCents=intent.hardCapCents-estimatedPast;working.vibeInterests=working.vibeInterests.replace(/(?:hard cap(?: of)?|no more than|maximum|max budget|do not (?:go over|exceed)|don['’]?t (?:go over|exceed))\s*\$?\s*\d+(?:\.\d{1,2})?/gi,'');}
+  if(intent.hardCapCents!==null){working.budgetIsCap=true;working.budgetCapPerPersonCents=intent.hardCapCents-estimatedPast;working.vibeInterests=withoutBudgetCap(working.vibeInterests);}
   working.endDayOffset=dayOffset(window.endDayOffset-baseDay);working.endDate=addDays(working.date,working.endDayOffset);
   return{request:working,baseDay,past,retainedStops:retainedStops.filter(s=>!done.has(s.id)).map(s=>({...s,arrivalDayOffset:dayOffset((s.arrivalDayOffset??0)-baseDay),departureDayOffset:dayOffset((s.departureDayOffset??0)-baseDay)}))};
 }

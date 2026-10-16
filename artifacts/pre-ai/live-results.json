@@ -1,0 +1,395 @@
+{
+  "startedAt": "2026-10-16T20:53:28.684Z",
+  "finishedAt": "2026-10-16T20:53:37.400Z",
+  "dates": {
+    "saturday": "2026-10-17",
+    "friday": "2026-10-23"
+  },
+  "paidAiEnabled": false,
+  "googleCalls": 155,
+  "modelCalls": 0,
+  "records": [
+    {
+      "number": 1,
+      "name": "Nothing planned",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Real identities and nonoverlapping travel checked. Prices, admission and enjoyment are not verified.",
+      "runId": "9a7e74a6-dd9f-4b69-b937-c95a7ae3ceee",
+      "planId": "28e2a245-1497-49ad-a07f-e852f5b590d4",
+      "revision": 1,
+      "elapsedMs": 766,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:30",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 2,
+      "name": "Beach date",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Beach, meal and dessert present. Peacefulness, romance, beach access and pacing need founder judgment.",
+      "runId": "109435a2-8563-471f-9e3b-b45a12c933b7",
+      "planId": "7c434c15-f8d4-4368-aed2-c57b6dc23c95",
+      "revision": 1,
+      "elapsedMs": 480,
+      "placeIds": [
+        "ChIJpwv-yCUw3YAR-FLtugATzAA",
+        "ChIJF4l1ozcv3YAR6q3FNtEdczM",
+        "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+      ],
+      "roles": [
+        "scenic-relax",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "HOURS_UNKNOWN",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "17:00",
+      "plannedFinish": "20:20",
+      "travelMinutes": 44,
+      "estimatedCostPerPersonCents": 2800
+    },
+    {
+      "number": 3,
+      "name": "Specific destination",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Exact selected pier ID preserved; no claim of verified pier/beach access.",
+      "runId": "4d5a0abb-6640-459c-a625-676d5d05b9a1",
+      "planId": "5f86628e-3416-4bb6-9a99-4080c9d3bd67",
+      "revision": 1,
+      "elapsedMs": 659,
+      "placeIds": [
+        "ChIJUQWAXrwu3YARJIuLRjlhzEw",
+        "ChIJ8zw1bbwu3YAR0k-onJWdzl0",
+        "ChIJTe33hkIh3YARxRbvWsfAVGg"
+      ],
+      "roles": [
+        "meal",
+        "dessert",
+        "casual-activity"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "HOURS_UNKNOWN"
+      ],
+      "plannedStart": "17:00",
+      "plannedFinish": "20:55",
+      "travelMinutes": 32,
+      "estimatedCostPerPersonCents": 3800
+    },
+    {
+      "number": 4,
+      "name": "Dinner reservation",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Simulated user booking preserves exact ID, 7 PM and user-entered 60 minutes. No booking was made.",
+      "runId": "8dae3e89-415d-4ff1-bc95-7c530dc2c594",
+      "planId": "fb5296e4-9d4b-43e1-a4e2-8b52a576078f",
+      "revision": 1,
+      "elapsedMs": 437,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "20:45",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 5,
+      "name": "Partial outing",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Experience choices and bowling before dessert checked. Specific venue suitability needs founder judgment.",
+      "runId": "b1319eb6-712d-465e-9b25-ddc05f38c4ca",
+      "planId": "dae7ebbb-2171-439a-bd0d-5fe1d9809cb1",
+      "revision": 1,
+      "elapsedMs": 428,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ8zw1bbwu3YAR0k-onJWdzl0"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:30",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 6,
+      "name": "Almost complete",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Explicitly selected a different real dessert through Edit details; other two user places and saved-plan identity remain.",
+      "runId": "5564729d-c292-4729-a1ae-e8effb754410",
+      "planId": "61847d7e-ff90-458a-8b20-3a5aaaa0783a",
+      "revision": 2,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:30",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 7,
+      "name": "Strict budget",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Cap applies to estimates, never guaranteed real spend. Infeasibility is acceptable when both requested experiences cannot fit.",
+      "runId": "afa6cfda-11df-4ddf-999f-c775d8a69bcb",
+      "planId": "65262e7b-2076-4b17-b5b5-4c39caec6db1",
+      "revision": 1,
+      "elapsedMs": 466,
+      "placeIds": [
+        "ChIJk_qBVwAt3YARXLc3yIkj6Pg",
+        "ChIJA1YgPLwu3YARY7nttvJCyug"
+      ],
+      "roles": [
+        "main-activity",
+        "meal"
+      ],
+      "hoursStatuses": [
+        "HOURS_UNKNOWN",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "18:35",
+      "travelMinutes": 11,
+      "estimatedCostPerPersonCents": 3500
+    },
+    {
+      "number": 8,
+      "name": "Short relaxed night",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Ninety-minute hard finish, two requested experiences and no extra stops checked; relaxed feel requires founder judgment.",
+      "runId": "a08fc764-e3af-4587-ad7d-588d56dc4683",
+      "planId": "cbfdd768-87b6-4de1-9b99-cdc73daaf2dd",
+      "revision": 1,
+      "elapsedMs": 263,
+      "placeIds": [
+        "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k",
+        "ChIJZWgybL4u3YARgMA_mAJ3dQM"
+      ],
+      "roles": [
+        "dessert",
+        "walk-explore"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "20:00",
+      "plannedFinish": "21:25",
+      "travelMinutes": 3,
+      "estimatedCostPerPersonCents": 1300
+    },
+    {
+      "number": 9,
+      "name": "Difficult timing",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Unreachable commitments rejected without silently moving or replacing either user decision.",
+      "runId": "303a5b0f-d169-4361-9352-87610dc0c724",
+      "elapsedMs": 461
+    },
+    {
+      "number": 10,
+      "name": "Keep and change",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Only selected dessert replaced. Kept protection, other identities, same Plan and affected travel retained.",
+      "runId": "f0f1252b-f5e9-46ee-ba8f-c26828ad4402",
+      "planId": "28e2a245-1497-49ad-a07f-e852f5b590d4",
+      "revision": 3,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:30",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 11,
+      "name": "Save and return",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Good",
+      "observation": "Actual SQLite close/reopen and new API instance retained edited Plan, IDs, times, budget and Keep. Browser/cross-device confirmation remains separate.",
+      "runId": "f0f1252b-f5e9-46ee-ba8f-c26828ad4402",
+      "planId": "28e2a245-1497-49ad-a07f-e852f5b590d4",
+      "revision": 3,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:30",
+      "travelMinutes": 17,
+      "estimatedCostPerPersonCents": 4800
+    },
+    {
+      "number": 12,
+      "name": "Running late",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Simulated completion, 15-minute delay and skip retained immutable completed stop and explicit history. This is bounded repair, not a real outing or autonomous replacement.",
+      "runId": "a1b589ba-3e5c-4de6-b27e-50f17e84ff1f",
+      "planId": "28e2a245-1497-49ad-a07f-e852f5b590d4",
+      "revision": 6,
+      "placeIds": [
+        "ChIJRf1A8G8v3YARhyKau_VTwzw",
+        "ChIJA1YgPLwu3YARY7nttvJCyug",
+        "ChIJ2RNNR7wu3YAR1_5aLQ_Jy7k"
+      ],
+      "roles": [
+        "main-activity",
+        "meal",
+        "dessert"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED",
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "16:00",
+      "plannedFinish": "19:45",
+      "travelMinutes": 16,
+      "estimatedCostPerPersonCents": 3300
+    },
+    {
+      "number": 13,
+      "name": "Library reality",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Needs improvement",
+      "observation": "Live library identity and Friday provider hours checked when supplied. Public/student access, exceptions and parking costs remain explicitly uncertain.",
+      "runId": "8707911c-5197-4eec-94e6-8eaadd06b7d8",
+      "planId": "2676da68-6071-43f8-b83b-1d069e4cff98",
+      "revision": 1,
+      "elapsedMs": 327,
+      "placeIds": [
+        "ChIJwYRiO_sr3YAR6bTQnXnswNA"
+      ],
+      "roles": [
+        "study"
+      ],
+      "hoursStatuses": [
+        "OPEN_CONFIRMED"
+      ],
+      "plannedStart": "14:00",
+      "plannedFinish": "15:50",
+      "travelMinutes": 8,
+      "estimatedCostPerPersonCents": 500
+    },
+    {
+      "number": 14,
+      "name": "Missing or failed provider information",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Good",
+      "observation": "Injected unknown hours/prices and provider failures on reopen/edit/live; no fabricated data or saved-state corruption."
+    },
+    {
+      "number": 15,
+      "name": "Invalid AI response (mock only)",
+      "functionality": "Pass",
+      "dataAccuracy": "Uncertain",
+      "quality": "Good",
+      "observation": "Mock-only fabricated ID, omitted fixed reservation and attempted timing override rejected. Safe fallback preserved fixed ID and 7 PM; no external AI request."
+    }
+  ]
+}

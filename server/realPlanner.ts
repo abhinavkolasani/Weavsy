@@ -16,6 +16,7 @@ import { suggestedStopCount } from '../src/planner/pacing.ts';
 import type { ModelGateway } from './model/gateway.ts';
 import type { CurrentPlan } from '../src/planning/currentPlan.ts';
 import { proposalIdentityErrors } from './model/validateProposal.ts';
+import { visitWarnings } from '../src/planner/visitWarnings.ts';
 const clock=timelineClock;
 
 export function finalConflicts(request:PlanningRequest,stops:ScheduledStop[]):string[] {
@@ -46,7 +47,7 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
   return {async build(request:PlanningRequest,context:{retainedStops?:OutingStop[];excludedIds?:string[];surgical?:boolean;replacementRole?:ExperienceRole;currentPlan?:CurrentPlan|null}={}):Promise<{result:RealPlanResult;diagnostics:PlanningDiagnostics}> {
     const window=outingWindow(request);
     const input:PlannerInput={request:structuredClone(request),intent:lightweightIntent.normalize(request),start:window.start,desiredFinish:window.finish,...(context.surgical?{replacementRole:context.replacementRole}:{})};
-    if(input.replacementRole){const search:Record<ExperienceRole,PlaceSearchType>={meal:'food','main-activity':'activity','casual-activity':'activity',coffee:'cafe',dessert:'dessert',drinks:'drinks','walk-explore':'park','shopping-browse':'shopping','scenic-relax':'beach','optional-extra':'activity'};if(!input.intent.searches.includes(search[input.replacementRole]))input.intent.searches.push(search[input.replacementRole]);if(!input.intent.desiredRoles.includes(input.replacementRole))input.intent.desiredRoles.push(input.replacementRole);}
+    if(input.replacementRole){const search:Record<ExperienceRole,PlaceSearchType>={meal:'food','main-activity':'activity','casual-activity':'activity',coffee:'cafe',dessert:'dessert',drinks:'drinks','walk-explore':'park','shopping-browse':'shopping','scenic-relax':'beach','optional-extra':'activity',study:'study'};if(!input.intent.searches.includes(search[input.replacementRole]))input.intent.searches.push(search[input.replacementRole]);if(!input.intent.desiredRoles.includes(input.replacementRole))input.intent.desiredRoles.push(input.replacementRole);}
     const diagnostics:PlanningDiagnostics={normalizedInput:input,decisions:request.existingStops.map(s=>({stopId:s.id,placeId:s.place?.provider_place_id??null,fixed:s.fixed,startTime:s.startTime,endTime:s.endTime,durationMinutes:s.durationMinutes})),openWindows:[],candidates:[],rejected:[],scores:[],selected:[],routes:[],assumptions:[],warnings:[],conflicts:[]};
     const fail=(message:string,status:'no-plan'|'clarification'='no-plan',lens:NonNullable<PlanningDiagnostics['quality']>[number]['lens']='REAL_WORLD_ACCURACY')=>{diagnostics.conflicts.push(message);if(!diagnostics.quality?.some(q=>!q.passed))diagnostics.quality=[{lens,passed:false,issues:[message]}];return {result:{status,primaryItinerary:null,message} as RealPlanResult,diagnostics};};
     try {
@@ -81,9 +82,10 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       if(!searches.includes('park')&&(input.intent.mood==='active'||request.budgetPerPerson.amountCents<3000))searches.push('park');
       // Longer outings need a broader mix, not repeated meals or the same activity twice.
       const pacing=suggestedStopCount(input.desiredFinish-input.start);
-      if(pacing>=3&&!searches.includes('beach')&&!searches.includes('park'))searches.push('park');
-      if(pacing>=3&&!searches.includes('dessert')&&!searches.includes('cafe'))searches.push('dessert');
-      if(pacing>=5&&!searches.includes('shopping'))searches.push('shopping');
+      const studyOnly=input.intent.desiredRoles.length===1&&input.intent.desiredRoles[0]==='study';
+      if(!studyOnly&&pacing>=3&&!searches.includes('beach')&&!searches.includes('park'))searches.push('park');
+      if(!studyOnly&&pacing>=3&&!searches.includes('dessert')&&!searches.includes('cafe'))searches.push('dessert');
+      if(!studyOnly&&pacing>=5&&!searches.includes('shopping'))searches.push('shopping');
       // Find the protected experience first, then search food/ending near its real implementation.
       if(searches.includes('beach')&&!existing.some(c=>c.category==='Beach')) {
         const found=await world.searchPlaces({query:'beaches',types:['beach'],location:request.startingPlace,radius:request.transportation==='driving'?40000:2500,limit:5});
@@ -125,7 +127,7 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       const automatic=request.startingPlace.provider==='google'?[...diverse,...ordered.filter(c=>!diverse.some(d=>d.id===c.id))]:ordered;
       pool=[...pool.filter(c=>c.userStopId),...automatic.slice(0,Math.max(0,(request.startingPlace.provider==='google'?13:22)-existing.length))];
       // Short outings can use the low end of a category duration; explicit user durations remain exact.
-      if(input.desiredFinish-input.start<=210&&input.intent.desiredRoles.length>=3)for(const c of pool)if(c.duration.source!=='user')c.duration={...c.duration,value:c.duration.low};
+      if((input.desiredFinish-input.start<=120&&input.intent.desiredRoles.length>=2)||(input.desiredFinish-input.start<=210&&input.intent.desiredRoles.length>=3))for(const c of pool)if(c.duration.source!=='user')c.duration={...c.duration,value:c.duration.low};
       diagnostics.candidates=pool;
       if(!pool.length)return fail('No usable real places were returned near your starting point. Try a nearby address or a broader interest.','no-plan','EXPERIENCE_SUPPLY');
       if(input.replacementRole&&!pool.some(c=>!c.userStopId&&c.role===input.replacementRole))return fail('I couldn’t find another usable place for that stop. Your current plan is still here. Try another change or a wider time window.','no-plan','EXPERIENCE_SUPPLY');
@@ -234,13 +236,10 @@ export function createRealPlanner(world:WorldProvider,routing:RoutingService,opt
       const missingRoles=input.intent.desiredRoles.filter(role=>!selected.some(s=>s.candidate.role===role));
       if(missingRoles.length)warnings.add('The available time or place hours limited the outing. It includes your existing choices; some requested activities could not fit.');
       const stops:OutingStop[]=selected.map((s,index)=>{
-        const c=s.candidate;const notes:string[]=[];
+        const c=s.candidate;
         if(c.protection==='PLANNER_FLEXIBLE'&&input.intent.experienceAnchors?.some(a=>a.role===c.role&&qualifyPlace(c.place,a.search).accepted))c.protection='EXPERIENCE_ANCHOR';
         c.hoursStatus=openingStatus(c,request.date,s.arrival,s.departure);
-        if(c.hoursStatus==='HOURS_UNKNOWN')notes.push('Hours weren’t available here — worth checking before you go.');
-        if(c.hoursStatus==='HOURS_PARTIAL')notes.push('Only some hours were available — check the full visit window before going.');
-        if(c.category==='Cinema')notes.push('Choose an actual showtime before going; this is a visit allowance.');
-        if(c.category==='Active activity')notes.push('Check public access, sessions and equipment requirements.');
+        const notes=visitWarnings(c.category,c.hoursStatus);
         const reason=c.protection==='USER_KEPT'?'You kept this place. The rest of the outing works around it.':c.userStopId&&!c.userStopId.startsWith('retained:')?'You chose this place. The rest of the outing works around it.':c.role==='meal'?'A meal stop close to the rest of your outing.':c.role==='main-activity'?input.intent.mood==='active'?'An active stop that fits your available time.':'One main activity to give the outing a little momentum.':c.role==='walk-explore'?'An easy outdoor pause with no planned purchase.':c.role==='dessert'?index===selected.length-1?'A short, relaxed ending after the main part of your outing.':'A short sweet break that fits between your other plans.':'A relaxed stop that complements your other plans.';
         return {id:c.id,userStopId:c.userStopId?.startsWith('retained:')?null:c.userStopId,place:c.place,role:c.role,category:c.category,arrival:clock(s.arrival),departure:clock(s.departure),arrivalDayOffset:timelineDay(s.arrival),departureDayOffset:timelineDay(s.departure),fixed:c.fixed,exactTime:c.fixedStart!==null,exactEnd:c.fixedEnd!==null,duration:{...c.duration,value:s.departure-s.arrival},cost:c.cost,travel:s.travel,transitionMinutes:s.bufferMinutes,waitMinutes:s.waitMinutes,reason,note:c.note,warnings:notes,protection:c.protection,qualification:c.qualification,hoursStatus:c.hoursStatus};
       });

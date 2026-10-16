@@ -12,7 +12,7 @@ const categories: Record<PlaceSearchType,string[]> = {
   food:['osm.amenity.restaurant','osm.amenity.fast_food'], 'casual-food':['osm.amenity.fast_food'], cafe:['osm.amenity.cafe'],
   dessert:['osm.amenity.ice_cream','osm.shop.bakery','osm.amenity.cafe'],
   bowling:['osm.leisure.bowling_alley'], cinema:['osm.amenity.cinema'], activity:['osm.leisure.sports_centre','osm.leisure.fitness_centre','osm.tourism.museum'],
-  shopping:['osm.shop.mall'],park:['osm.leisure.park'],beach:['osm.natural.beach'],museum:['osm.tourism.museum'],drinks:['osm.amenity.bar'],
+  shopping:['osm.shop.mall'],park:['osm.leisure.park'],beach:['osm.natural.beach'],museum:['osm.tourism.museum'],drinks:['osm.amenity.bar'],study:['osm.amenity.library'],
 };
 const text = (v: unknown): string | null => typeof v === 'string' && !!v.trim() ? v.trim() : null;
 function address(properties: JsonRecord): string | null {
@@ -29,6 +29,7 @@ export function normalizePhoton(feature: JsonRecord, fetchedAt: string): PlaceRe
 }
 export function inferSearchType(query: string): PlaceSearchType | undefined {
   const category=query.trim().replace(/^(?:casual|sit-down|cheap|nearby)\s+/i,'');
+  if (/^(?:study|libraries|library)$/i.test(category)) return 'study';
   if (/^bowling(?: alley)?s?$/i.test(category)) return 'bowling';
   if (/^(?:cinemas?|movies?|flicks)$/i.test(category)) return 'cinema';
   if (/^(?:desserts?|ice cream|baker(?:y|ies))$/i.test(category)) return 'dessert';

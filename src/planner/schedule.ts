@@ -72,7 +72,7 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
   const baseline=mandatory.reduce((s,c)=>s+c.cost.value,0);
   // A protected expensive anchor isn't removed to meet a soft budget. Extras remain restrained.
   const severeLimit=Math.max(baseline,target===0?0:target*1.65+500);
-  const desired=input.intent.desiredRoles.slice(0,input.desiredFinish-input.start<110?1:6);
+  const desired=input.intent.desiredRoles.slice(0,6);
   const covered=(role:string,stops:ScheduledStop[])=>stops.some(s=>s.candidate.role===role||(role==='walk-explore'&&s.candidate.role==='scenic-relax'));
   const anchored=(stops:ScheduledStop[])=>(input.intent.experienceAnchors??[]).every(a=>stops.some(s=>s.candidate.role===a.role&&qualifyPlace(s.candidate.place,a.search).accepted))&&(!input.replacementRole||stops.some(s=>!s.candidate.userStopId&&s.candidate.role===input.replacementRole));
   type State={stops:ScheduledStop[];cursor:number;previous:number;cost:number;score:number};
@@ -142,7 +142,7 @@ export function schedule(input:PlannerInput,candidates:CandidatePlace[],matrix:R
     if(!beam.length)break;
   }
   // If the user's pieces already form a complete outing, no extra stop is required.
-  if(!best) {
+  if(!best&&mandatoryOnly&&(mandatory.length||(input.intent.requiredRoles??desired).every(r=>covered(r,mandatoryOnly!.stops)))) {
     best=mandatoryOnly;
   }
   return {stops:best?.stops??[],rejected:[...rejected.values()],conflict:best?null:cap!==null&&baseline>cap?'Your protected stops already exceed the budget cap in estimates. Keep those stops or change the cap?':mandatory.some(c=>c.protection==='USER_KEPT')?'You asked me to keep '+mandatory.filter(c=>c.protection==='USER_KEPT').map(c=>c.place.display_name).join(' and ')+', but the new timing, travel or budget constraints leave too little room. I tried moving flexible times. Keep the new constraint or explicitly release a kept place?':mandatory.length?'I couldn’t connect your protected places and times inside these constraints. They have not been changed. Try a longer window or explicitly change one commitment.':'I couldn’t fit the requested experiences into this window with usable places and travel. Try a longer window or adjust one interest.'};

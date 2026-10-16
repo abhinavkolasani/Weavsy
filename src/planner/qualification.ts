@@ -14,9 +14,11 @@ export function qualifyPlace(place:PlaceReference, expected?:PlaceSearchType, ex
   const informative=primary&&!['point_of_interest','establishment','food','store','unknown'].includes(primary);
   const pick=(pattern:RegExp)=>(informative?[primary]:types).find(t=>pattern.test(t));
   if((match=pick(/^(ice_cream_shop|ice_cream|bakery|dessert_shop|dessert_restaurant|donut_shop|cake_shop|confectionery|candy_store)$/))){role='dessert';category='Dessert';}
+  else if((match=pick(/^library$/))){role='study';category='Library / study';}
   else if((match=pick(/^(cafe|coffee_shop|coffee_stand|tea_house)$/))){role='coffee';category='Coffee';}
   else if((match=pick(/restaurant$|^fast_food$|^diner$|^bistro$|^food_court$|^meal_takeaway$|^meal_delivery$|^deli$|^sandwich_shop$/))){role='meal';category=/fast_food|sandwich|pizza|meal_|food_court|diner/.test(match)?'Casual food':'Restaurant';}
   else if((match=pick(/^beach$/))){role='scenic-relax';category='Beach';}
+  else if((match=pick(/^fishing_pier$/))){role='walk-explore';category='Waterfront / pier';}
   else if((match=pick(/^bowling_alley$/))){role='main-activity';category='Bowling';}
   else if((match=pick(/^movie_theater$|^cinema$/))){role='main-activity';category='Cinema';}
   else if((match=pick(/museum|aquarium|art_gallery/))){role='main-activity';category='Museum';}
@@ -27,7 +29,7 @@ export function qualifyPlace(place:PlaceReference, expected?:PlaceSearchType, ex
   else if((match=pick(/^park$|^city_park$|^state_park$|^national_park$|^garden$|^botanical_garden$|^plaza$|^viewpoint$|^scenic_spot$|^observation_deck$/))){role='walk-explore';category='Walk / outdoors';}
   else if((match=pick(/concert_hall|performing_arts_theater|event_venue|historical_landmark|cultural_landmark|tourist_attraction/))){role='casual-activity';category='Visit';}
   if(!match) return {...base,accepted:false,reason:types.length?'LOW_PLACE_CONFIDENCE':'INSUFFICIENT_PLACE_DATA',detail:'No usable consumer-destination type. Generic map identity alone is not enough.'};
-  const compatible:Record<PlaceSearchType,ExperienceRole[]>={food:['meal'],'casual-food':['meal'],cafe:['coffee'],dessert:['dessert'],beach:['scenic-relax'],park:['walk-explore'],museum:['main-activity'],bowling:['main-activity'],cinema:['main-activity'],activity:['main-activity'],shopping:['shopping-browse'],drinks:['drinks']};
+  const compatible:Record<PlaceSearchType,ExperienceRole[]>={food:['meal'],'casual-food':['meal'],cafe:['coffee'],dessert:['dessert'],beach:['scenic-relax'],park:['walk-explore'],museum:['main-activity'],bowling:['main-activity'],cinema:['main-activity'],activity:['main-activity'],shopping:['shopping-browse'],drinks:['drinks'],study:['study']};
   const exactCategory=expected&&({museum:'Museum',bowling:'Bowling',cinema:'Cinema'} as Partial<Record<PlaceSearchType,string>>)[expected];
   if(expected&&(!compatible[expected].includes(role)||(exactCategory&&category!==exactCategory)))return {providerType:primary,category,role,confidence:'medium',accepted:false,reason:'ROLE_MISMATCH',detail:'Actual venue category does not serve the requested '+expected+' experience.'};
   return {providerType:primary,category,role,confidence:primary===match?'high':'medium',accepted:true,reason:null,detail:primary===match?'Primary provider type supports this role.':'A specific secondary provider type supports this role.'};

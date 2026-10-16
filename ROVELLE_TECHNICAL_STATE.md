@@ -1,5 +1,7 @@
 # Rovelle technical state — October 9, 2026
 
+**October 16 follow-up:** the supplied 15-case pre-AI checklist has now been exercised, with targeted fixes to request fidelity, short windows, study-library supply and saved warning disclosures. See `PRE_AI_ACCEPTANCE.md` and `artifacts/pre-ai/live-results.json` for the current scope, pass criteria, quality weaknesses and verification limits. Paid AI remains disabled. The October 9 narrative below is historical; its local-only/publication statements are not current deployment status.
+
 This is an implementation snapshot, not alpha graduation or founder acceptance. Continue the existing project; do not infer a production release from this report.
 
 **Publication follow-up, October 9:** Abhinav subsequently authorized publishing these changes to the existing public Site. The initial local-only status and rollout instructions below describe the implementation handoff before that authorization. The publication keeps the existing project, URL, Google credentials and audience; paid OpenAI calls remain disabled. Use the returned Sites deployment status as the evidence of successful publication, not this source snapshot. Founder outing acceptance remains outstanding.

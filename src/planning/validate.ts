@@ -3,6 +3,7 @@ import type { PlanningDraft, PlanningRequest, ValidationErrors, ValidationResult
 import { isPlaceReference } from '../world/reference.ts';
 import { displayTime, parseTypedTime } from './displayTime.ts';
 import { isClockTime, clockMinutes, outingWindow, stopTiming, addDays } from './timeline.ts';
+import { budgetCapInText } from './budget.ts';
 export const validTime = isClockTime;
 export const toMinutes = clockMinutes;
 export function validDate(date: string) {
@@ -79,8 +80,8 @@ export function validateRequest(draft: PlanningDraft, options: {requirePlaceSele
       constraints: { preservePlace: stop.entryKind!=='activity', preserveStartTime: stop.fixed && !!stop.startTime, preserveEndTime: stop.fixed && stop.timingDetail === 'end-time', preserveDuration: stop.fixed && stop.timingDetail === 'duration' },
     }; }),
   };
-  const cap=/(?:hard cap(?: of)?|no more than|maximum|max budget|do not (?:go over|exceed)|don['’]?t (?:go over|exceed))\s*\$?\s*(\d+(?:\.\d{1,2})?)/i.exec(request.vibeInterests);
-  if(cap){request.budgetCapPerPersonCents=Math.round(Number(cap[1])*100);request.budgetIsCap=true;if(!Number.isSafeInteger(request.budgetCapPerPersonCents))return {ok:false,errors:{budgetPerPerson:'Enter a smaller budget cap.'}};}
+  const cap=budgetCapInText(request.vibeInterests);
+  if(cap!==null){request.budgetCapPerPersonCents=cap;request.budgetIsCap=true;if(!Number.isSafeInteger(request.budgetCapPerPersonCents))return {ok:false,errors:{budgetPerPerson:'Enter a smaller budget cap.'}};}
   else if(request.budgetIsCap)request.budgetCapPerPersonCents=request.budgetPerPerson.amountCents;
   const home=/(?:home|back(?: at (?:home|the start|my starting point))?) by\s*(\d{1,2}(?::\d{2})?)\s*(am|pm)/i.exec(request.vibeInterests);
   if(home){const time=parseTypedTime(home[1],home[2].toUpperCase() as 'AM'|'PM');if(time){request.requiredEndTime=time;request.finishIsHard=true;request.returnToStart=true;request.endDayOffset=outingWindow(request).endDayOffset;request.endDate=addDays(request.date,request.endDayOffset);}}

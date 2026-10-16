@@ -9,6 +9,8 @@ import { openingStatus } from '../src/planner/schedule.ts';
 import { toMinutes } from '../src/planning/validate.ts';
 import type { PlaceDetails } from '../src/world/types.ts';
 import { refreshEstimatedTotals } from '../src/itinerary/totals.ts';
+import { visitWarnings } from '../src/planner/visitWarnings.ts';
+import { lightweightIntent } from '../src/planner/intent.ts';
 
 export interface StoredPlan { id:string; revision:number; tokenHash:string; snapshot:string; updatedAt:string;eventJson?:string }
 export interface PlanRepository {
@@ -62,12 +64,20 @@ export async function restorePlan(record:StoredPlan,world:WorldProvider,routing:
     if(!ignored.has(s.id))previousVisitedIndex=i+1;
     const candidate=candidateFromPlace(s.place);candidate.openingInformation=detailsById.get(s.id)!.opening_hours;
     s.hoursStatus=openingStatus(candidate,plan.request.date,toMinutes(s.arrival)+(s.arrivalDayOffset??0)*1440,toMinutes(s.departure)+(s.departureDayOffset??0)*1440);
-    s.warnings=s.hoursStatus==='CLOSED_CONFIRMED'?['Current listed availability conflicts with this saved visit. Your choice and times are preserved; confirm or explicitly change this stop.']:s.hoursStatus==='OPEN_CONFIRMED'?[]:['Hours are incomplete or unavailable. Confirm this saved visit before going.'];
+    s.warnings=visitWarnings(s.category,s.hoursStatus);
   }
   const itinerary=plan.result.primaryItinerary;
   if(plan.request.returnToStart){const back=matrix.legs[previousVisitedIndex]?.[0];if(!back)throw new WorldError('The return journey could not refresh.',503);itinerary.returnTravel=back;}
   refreshEstimatedTotals(itinerary,ignored);
   itinerary.warnings=['This is your saved plan, with fresh place identity and travel estimates. Opening hours and actual prices still need confirmation. Nothing is booked by this app.'];
+  itinerary.warnings.push('Costs use category estimates or Google price signals, not verified menu or ticket prices. Parking, passes and other shared costs may be extra.');
+  itinerary.warnings.push('Travel uses mapped roads or footpaths without live traffic. Each journey includes a separate transition allowance.');
+  const intent=lightweightIntent.normalize(plan.request);
+  if(intent.hardCapCents!==null){
+    itinerary.warnings.push('Your stated cap was applied to estimates. Actual prices are unverified, so confirm them before spending.');
+    if(itinerary.costPerPersonCents>intent.hardCapCents){itinerary.warnings.push(`Fresh estimates exceed your $${intent.hardCapCents/100} per-person cap. Your choices are preserved; change a flexible stop or explicitly change the cap.`);plan.liveAttention='constraint-conflict';}
+  }
+  if(itinerary.costPerPersonCents>plan.request.budgetPerPerson.amountCents)itinerary.warnings.push(`The estimated total is about $${Math.round(itinerary.costPerPersonCents/100)} per person, above your $${plan.request.budgetPerPerson.amountCents/100} target.`);
   if(!isCurrentPlan(plan)||plan.id!==record.id||plan.revision!==record.revision)throw new WorldError('This saved outing could not be read.',503);
   return plan;
 }

@@ -11,7 +11,7 @@ const GOOGLE_TYPES:Record<PlaceSearchType,string[]>={
   cafe:['cafe','coffee_shop'], dessert:['ice_cream_shop','bakery','dessert_shop'],
   bowling:['bowling_alley'], cinema:['movie_theater'],
   activity:['bowling_alley','museum','sports_complex'], shopping:['shopping_mall'], park:['park'],
-  beach:['beach'],museum:['museum'],drinks:['bar'],
+  beach:['beach'],museum:['museum'],drinks:['bar'],study:['library'],
 };
 type Raw = Record<string,any>;
 const time=(n:number)=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');

@@ -4,6 +4,7 @@ import { isRealPlanResult } from '../itinerary/realPlan.ts';
 import { outingWindow, timelineClock, addDays } from './timeline.ts';
 import { parseTypedTime } from './displayTime.ts';
 import type { ExperienceRole } from '../planner/types.ts';
+import { budgetCapInText, withoutBudgetCap } from './budget.ts';
 export interface PlanSignal { at:string;type:'shown'|'considered'|'selected'|'kept'|'changed'|'rejected'|'restored'|'adjusted'|'conflict';placeId?:string;request?:string;runId?:string }
 export interface ExecutionEvent { at:string;type:'completed'|'skipped'|'unavailable'|'late';placeId?:string;minutes?:number }
 export interface CurrentPlan { version:1;id:string;revision:number;runId:string;request:PlanningRequest;result:Extract<RealPlanResult,{status:'complete'}>;history:PlanSignal[];excludedPlaceIds:string[];execution?:ExecutionEvent[];liveAttention?:'constraint-conflict' }
@@ -50,7 +51,7 @@ export function prepareEdit(plan:CurrentPlan,edit:PlanEdit):{request:PlanningReq
     if(statedTime){const finish=parseTypedTime(statedTime[1],statedTime[2].toUpperCase() as 'AM'|'PM');if(!finish)throw new Error('Enter a finish time like 10:30 PM.');request.requiredEndTime=finish;request.finishIsHard=true;request.returnToStart=/home by|back by/.test(text);understood=true;}
     else if(/stay out later|finish later|out later/.test(text)){const finish=Math.min(outingWindow(request).finish+60,outingWindow(request).start+1439);request.requiredEndTime=timelineClock(finish);understood=true;}
     else if(/finish earlier|earlier finish/.test(text)){const finish=outingWindow(request).finish-60;if(finish<=outingWindow(request).start)throw new Error('An hour earlier would leave no outing time. Choose a finish time in Edit details.');request.requiredEndTime=timelineClock(finish);request.finishIsHard=true;understood=true;}
-    if(/(?:do not|don['’]?t) (?:go over|exceed)|hard cap|no more than/.test(text)){request.vibeInterests=request.vibeInterests.replace(/(?:hard cap(?: of)?|no more than|maximum|max budget|do not (?:go over|exceed)|don['’]?t (?:go over|exceed))\s*\$?\s*\d+(?:\.\d{1,2})?/gi,'')+' '+edit.text;understood=true;}
+    if(budgetCapInText(text)!==null){request.vibeInterests=withoutBudgetCap(request.vibeInterests)+' '+edit.text;understood=true;}
     if(!understood)throw new Error('Try “Dinner first”, “Different dessert”, “Less driving”, “More active”, “Make it cheaper”, “Stay out later”, or a finish time like “Home by 10:30 PM”.');
     history.push({at:new Date().toISOString(),type:'adjusted',request:edit.text});
   }

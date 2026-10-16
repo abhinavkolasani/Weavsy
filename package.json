@@ -12,6 +12,7 @@
     "build": "tsc --noEmit && vite build && node scripts/build-cloud.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:pre-ai:live": "node --experimental-strip-types scripts/verify-pre-ai.mjs",
     "db:generate": "drizzle-kit generate",
     "catalog:inspect": "node --experimental-strip-types scripts/inspect-catalog.ts",
     "start": "node --experimental-strip-types server/start.mjs --production",
